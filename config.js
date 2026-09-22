@@ -7,16 +7,7 @@ window.KONA_CONFIG = {
     officialImfUrl: "https://www.ironmanfoundation.org/"
   },
   data: {
-    // Optional legacy Google Sheet path; can stay blank.
-    sheetCsvUrl: "",
-    googleFormUrl: "",
-
-    // Recommended live-update path:
-    // Create a free Supabase project, then paste the Project URL + anon/public key here.
-    // Historical workouts remain embedded in workouts-data.js.
-    // New workouts are stored in Supabase and automatically appear for everyone.
-    supabaseUrl: "",
-    supabaseAnonKey: ""
+    apiUrl: "https://mobesktajbsicjamgetc.supabase.co/functions/v1/kona-api"
   },
 
   admin: {
