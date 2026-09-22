@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Walker — Log workout</title>
+<style>body{font-family:system-ui;max-width:760px;margin:40px auto;padding:20px;background:#071015;color:#fff}h1{font-size:48px;letter-spacing:-.05em}label{display:block;margin:12px 0 5px;color:#aeb9c0}input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid #2b404b;background:#0d1a21;color:#fff}button,a.btn{display:inline-block;margin-top:18px;padding:12px 16px;border:0;border-radius:999px;background:#ed2434;color:#fff;text-decoration:none;font-weight:800;cursor:pointer}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}pre{white-space:pre-wrap;background:#0d1a21;padding:16px;border-radius:12px;border:1px solid #2b404b}.muted{color:#94a3ac}</style></head>
+<body><h1>Log a workout</h1><p class="muted">For the hosted site, the cleanest setup is Google Form → Google Sheet → site. For now, this page can also save workouts in this browser and export them so nothing gets lost.</p>
+<a class="btn" id="formLink" href="#" target="_blank" style="display:none">Open workout Google Form</a>
+<div class="row"><div><label>Date</label><input id="date" type="date"></div><div><label>Type</label><select id="type"><option>Bike</option><option>Run</option><option>Swim</option><option>Strength</option><option>Race</option><option>Other</option></select></div></div>
+<label>Title</label><input id="title">
+<div class="row"><div><label>Hours</label><input id="duration_hours" type="number" step=".01"></div><div><label>Strength session (1/0)</label><input id="strength" type="number" value="0"></div></div>
+<div class="row"><div><label>Bike miles</label><input id="bike_miles" type="number" step=".01"></div><div><label>Run miles</label><input id="run_miles" type="number" step=".01"></div></div>
+<label>Swim yards</label><input id="swim_yards" type="number" step="1">
+<label>Summary</label><textarea id="summary"></textarea>
+<label>Details</label><textarea id="details"></textarea>
+<button onclick="build()">Build CSV row</button> <button onclick="saveLocal()" style="background:#263943">Save in this browser</button> <button onclick="downloadAll()" style="background:#263943">Export saved workouts</button>
+<pre id="out"></pre>
+<div id="saved"></div>
+<script src="config.js"></script><script>
+if(window.KONA_CONFIG.data.googleFormUrl){let a=document.getElementById('formLink');a.href=window.KONA_CONFIG.data.googleFormUrl;a.style.display='inline-block'}
+document.getElementById('date').value=new Date().toISOString().slice(0,10);
+const ids=['date','type','title','duration_hours','bike_miles','run_miles','swim_yards','strength','summary','details'];
+function esc(s){s=String(s||'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function row(){return [...ids.map(id=>document.getElementById(id).value),'Manual'].map(esc).join(',')}
+function build(){document.getElementById('out').textContent=row()}
+function saveLocal(){
+ const obj={date:date.value,type:type.value,title:title.value,duration_hours:duration_hours.value,bike_miles:bike_miles.value,run_miles:run_miles.value,swim_yards:swim_yards.value,strength:strength.value,summary:summary.value,details:details.value,source:'Manual'};
+ const arr=JSON.parse(localStorage.getItem('walkerKonaWorkouts')||'[]');arr.push(obj);localStorage.setItem('walkerKonaWorkouts',JSON.stringify(arr));renderSaved();document.getElementById('out').textContent='Saved locally.';
+}
+function renderSaved(){const arr=JSON.parse(localStorage.getItem('walkerKonaWorkouts')||'[]');document.getElementById('saved').innerHTML='<h2>Saved locally</h2>'+arr.slice().reverse().map(x=>`<p><b>${x.date}</b> — ${x.title||x.type}</p>`).join('')}
+function downloadAll(){const arr=JSON.parse(localStorage.getItem('walkerKonaWorkouts')||'[]');const headers=['date','type','title','duration_hours','bike_miles','run_miles','swim_yards','strength','summary','details','source'];const lines=[headers.join(','),...arr.map(x=>headers.map(h=>esc(x[h]||'')).join(','))];let blob=new Blob([lines.join('\n')+'\n'],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='walker-new-workouts.csv';a.click();URL.revokeObjectURL(a.href)}
+renderSaved();
+</script></body></html>

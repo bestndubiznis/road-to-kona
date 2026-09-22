@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Walker Wells — Road to Kona</title>
+<meta name="description" content="Hi, I'm Walker. I'm racing the IRONMAN World Championship in Kona on behalf of the IRONMAN Foundation and raising $50,000. Follow the training and the impact.">
+<style>
+:root{--bg:#071015;--panel:#0c171d;--panel2:#11212a;--text:#faf8f2;--muted:#9eabb4;--red:#ed2434;--gold:#f1a448;--blue:#64cbd6;--line:#253943;--max:1200px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}
+a{color:inherit}.nav{position:fixed;inset:0 0 auto;z-index:30;background:rgba(7,16,21,.72);backdrop-filter:blur(18px);border-bottom:1px solid #ffffff10}.navin{max-width:var(--max);margin:auto;padding:14px 22px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:950;letter-spacing:-.04em}.brand span{color:var(--red)}.links{display:flex;gap:20px;align-items:center}.links a{text-decoration:none;color:#d7e0e5;font-size:14px}.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:999px;background:var(--red);padding:13px 18px;color:#fff;font-weight:850;text-decoration:none;cursor:pointer}.btn.alt{background:#ffffff0b;border:1px solid #ffffff20}
+.hero{min-height:100vh;display:flex;align-items:flex-end;position:relative;background:linear-gradient(180deg,#00000010,#07101522 35%,#071015f7 95%),url('assets/kona.jpg') center/cover}.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0610158c,transparent 65%)}
+.heroIn{position:relative;z-index:2;max-width:var(--max);width:100%;margin:auto;padding:125px 22px 78px}.kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:900}.hello{font-size:clamp(68px,11vw,150px);line-height:.82;letter-spacing:-.075em;margin:10px 0 0}.heroSub{font-size:clamp(19px,2.2vw,27px);max-width:820px;color:#eff3f4;margin:28px 0}.heroActions{display:flex;gap:10px;flex-wrap:wrap}.chips{display:flex;gap:9px;flex-wrap:wrap;margin-top:26px}.chip{font-size:12px;padding:8px 11px;border:1px solid #ffffff24;background:#0710159b;border-radius:999px}
+section{max-width:var(--max);margin:auto;padding:88px 22px}.sectionTop{display:flex;justify-content:space-between;gap:28px;align-items:end;margin-bottom:34px}.sectionTop h2{font-size:clamp(43px,6vw,75px);line-height:.94;letter-spacing:-.055em;margin:0}.sectionTop p{max-width:540px;color:var(--muted);font-size:17px;margin:0}
+.card{background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:26px;overflow:hidden}.storyGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.story{padding:30px}.story h3{font-size:34px;letter-spacing:-.04em;margin:4px 0 12px}.story p{color:var(--muted);font-size:17px}
+.fund{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}.money{padding:32px}.moneyNum{font-size:clamp(70px,10vw,115px);font-weight:950;letter-spacing:-.075em;line-height:.86}.track{height:16px;background:#ffffff14;border-radius:999px;overflow:hidden;margin-top:25px}.track>div{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));width:0;transition:width 1.2s}.trackmeta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:9px}.race{padding:30px}.raceBig{font-size:68px;font-weight:950;line-height:1}.raceParts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.raceParts div{padding:13px;background:#ffffff09;border:1px solid #ffffff0d;border-radius:15px}.raceParts b{font-size:24px;display:block}.raceParts small{color:var(--muted)}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.milestone{padding:19px;border:1px solid var(--line);border-radius:20px;background:#0b151b}.milestone .d{font-size:12px;color:var(--gold);font-weight:800}.milestone h3{font-size:21px;margin:6px 0}.milestone p{color:var(--muted);font-size:13px;margin:0}
+.santa{padding:30px}.splitgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:20px}.split{padding:14px;border-radius:16px;background:#ffffff08;border:1px solid #ffffff0d}.split b{display:block;font-size:24px}.split small{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:11px}.stat{padding:18px;border-radius:18px;border:1px solid var(--line);background:#0b151b}.statn{font-size:29px;font-weight:950;letter-spacing:-.04em}.statl{font-size:11px;color:var(--muted);margin-top:4px}.note{font-size:12px;color:#72808a;margin-top:12px}
+.trainingGrid{display:grid;grid-template-columns:.8fr 1.5fr;gap:24px;margin-top:24px}.sticky{position:sticky;top:90px;align-self:start}.chart{height:240px;display:flex;align-items:end;gap:5px;padding:20px;border:1px solid var(--line);border-radius:22px;background:#0a1419}.bar{flex:1;min-width:5px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--blue),#236875);position:relative}.bar:hover:after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#081015;border-radius:7px;padding:5px 7px;font-size:10px;z-index:5}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.tab{border:1px solid var(--line);background:#0b151b;color:#dbe3e7;padding:8px 12px;border-radius:999px;cursor:pointer}.tab.active{background:#fff;color:#071015}.workouts{display:flex;flex-direction:column;gap:11px}.w{padding:18px;border:1px solid var(--line);border-radius:18px;background:#0b151b;transition:.18s}.w:hover{transform:translateY(-2px);border-color:#3b5c6a}.wtop{display:flex;justify-content:space-between;gap:16px}.wdate{font-size:11px;color:var(--muted)}.wtitle{font-size:20px;font-weight:900;letter-spacing:-.03em}.badge{font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:#ffffff0d;border-radius:999px;padding:6px 8px;height:max-content}.source{font-size:10px;color:#78909c;margin-top:7px}.w p{margin:9px 0 5px}.wdetails{font-size:12px;color:var(--muted)}.load{margin-top:14px}
+.impactgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.impact{min-height:390px;position:relative;background-position:center;background-size:cover;border-radius:26px;overflow:hidden}.impact:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 10%,rgba(4,10,13,.92) 100%)}.icopy{position:absolute;z-index:2;left:24px;right:24px;bottom:24px}.icopy .num{font-size:48px;font-weight:950}.icopy h3{font-size:29px;letter-spacing:-.04em;margin:0}.icopy p{margin-bottom:0;color:#dce4e8}
+.faq{display:flex;flex-direction:column;gap:10px}.fi{border:1px solid var(--line);border-radius:18px;background:#0b151b;overflow:hidden}.fq{width:100%;display:flex;justify-content:space-between;gap:20px;text-align:left;background:none;border:none;color:#fff;padding:20px;font-size:18px;font-weight:900;cursor:pointer}.fa{max-height:0;overflow:hidden;padding:0 20px;color:var(--muted);transition:.3s}.fi.open .fa{max-height:500px;padding:0 20px 20px}.plus{font-size:22px;transition:.2s}.fi.open .plus{transform:rotate(45deg)}
+.cta{text-align:center;padding:52px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(145deg,#12222b,#091116)}.cta h2{font-size:clamp(46px,6vw,76px);letter-spacing:-.055em;line-height:.95;margin:5px 0 16px}.cta p{max-width:650px;margin:0 auto 24px;color:var(--muted);font-size:17px}
+.adminHint{margin-top:14px;font-size:12px;color:#6e7c85}footer{max-width:var(--max);margin:auto;padding:0 22px 50px;color:#6d7c85;font-size:12px}
+
+.modalBack{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modalBack.open{display:flex}
+.modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#0c171d;border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:0 30px 100px #0008}
+.modalHead{display:flex;justify-content:space-between;gap:20px;align-items:start;margin-bottom:16px}.modalHead h3{font-size:34px}.x{border:0;background:#ffffff10;color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;cursor:pointer}
+.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin:0 0 5px}.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#081218;color:#fff;font:inherit}.field textarea{min-height:88px;resize:vertical}.full{grid-column:1/-1}.saveStatus{font-size:13px;color:var(--muted);margin-top:12px}.saveStatus.ok{color:#8ee2ad}.saveStatus.err{color:#ff8e98}
+@media(max-width:650px){.formGrid{grid-template-columns:1fr}.full{grid-column:auto}}
+
+@media(max-width:900px){.links a:not(.btn){display:none}.storyGrid,.fund,.trainingGrid{grid-template-columns:1fr}.timeline{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.splitgrid{grid-template-columns:repeat(2,1fr)}.impactgrid{grid-template-columns:1fr}.sticky{position:static}}
+</style>
+</head>
+<body>
+<div class="nav"><div class="navin"><div class="brand">WALKER <span>→ KONA</span></div><div class="links"><a href="#about">About</a><a href="#training">Training</a><a href="#impact">Impact</a><a href="#faq">FAQ</a><button id="adminOpen" class="btn alt" style="padding:10px 14px">+ Add</button><a href="#donate" class="btn">Donate</a></div></div></div>
+
+<header class="hero">
+ <div class="heroIn">
+  <div class="kicker">Road to Kona · 2027</div>
+  <h1 class="hello">Hi, I'm Walker.</h1>
+  <p class="heroSub">In 2027, I'm racing the <b>IRONMAN World Championship in Kona</b> on behalf of the <b>IRONMAN Foundation</b>. I was selected for one of a limited number of Team IMF World Championship entries, with a commitment to raise <b>$50,000</b> for the Foundation along the way.</p>
+  <div class="heroActions"><a href="#training" class="btn">Follow the training</a><a href="#impact" class="btn alt">See the impact</a></div>
+  <div class="chips"><span class="chip">2.4 mi swim</span><span class="chip">112 mi bike</span><span class="chip">26.2 mi run</span><span class="chip">$50,000 fundraising goal</span></div>
+ </div>
+</header>
+
+<section id="about">
+ <div class="sectionTop"><h2>Why Kona</h2><p>Kona has always carried more meaning for me than just being another race. Triathlon has been part of my family for generations, and this is a chance to take on the race they both cared about most while also raising money for something worthwhile.</p></div>
+ <div class="storyGrid">
+  <div class="card story"><div class="kicker">Family connection</div><h3>A race that has been in my family for a long time.</h3><p>My grandfather was a triathlete and had always wanted to race Kona, but never got the chance before he passed away. My dad also raced triathlons and made it to Kona as a spectator, but never had the opportunity to compete there himself. Racing it now feels like a pretty meaningful continuation of that story.</p></div>
+  <div class="card story"><div class="kicker">Team IMF</div><h3>One of a limited number of World Championship entries.</h3><p>I was selected to receive one of Team IMF's limited Kona entries. My place in the race is secured through the program, and in return I've committed to raising $50,000 for the IRONMAN Foundation by September 2027.</p></div>
+ </div>
+</section>
+
+<section>
+ <div class="fund">
+  <div class="card money"><div class="kicker">Fundraising goal</div><div class="moneyNum">$50K</div><p style="color:var(--muted);font-size:17px">For the IRONMAN Foundation by September 2027.</p><div class="track"><div id="fundBar"></div></div><div class="trackmeta"><span id="raisedText">$0 raised</span><span>$50,000</span></div><div id="donationRecent" class="note" style="margin-top:16px"></div></div>
+  <div class="card race"><div class="kicker">World Championship distance</div><div class="raceBig">140.6</div><div style="color:var(--muted)">total miles</div><div class="raceParts"><div><b>2.4</b><small>swim</small></div><div><b>112</b><small>bike</small></div><div><b>26.2</b><small>run</small></div></div></div>
+ </div>
+</section>
+
+<section>
+ <div class="sectionTop"><h2>The build so far</h2><p>This tracks the work that has gone into the project from my first structured block through Santa Cruz and into the build toward Kona.</p></div>
+ <div class="timeline">
+  <div class="milestone"><div class="d">MAY 18, 2026</div><h3>Structured build begins</h3><p>The first logged swim-bike-run block in this training history.</p></div>
+  <div class="milestone"><div class="d">JULY 10, 2026</div><h3>TrainingPeaks</h3><p>From here, the history is based on completed TrainingPeaks workouts and device data.</p></div>
+  <div class="milestone"><div class="d">SEPT 13, 2026</div><h3>First 70.3</h3><p>IRONMAN 70.3 Santa Cruz — 5:29:35.</p></div>
+  <div class="milestone"><div class="d">NOW</div><h3>Building toward Kona</h3><p>The next phase is about becoming strong enough to race the full distance well.</p></div>
+ </div>
+ <div class="card santa" style="margin-top:18px">
+  <div class="kicker">IRONMAN 70.3 Santa Cruz · First 70.3</div><h3 style="font-size:40px;margin-top:5px">5:29:35</h3>
+  <div class="splitgrid"><div class="split"><b>37:55</b><small>Swim</small></div><div class="split"><b>7:41</b><small>T1</small></div><div class="split"><b>2:57:05</b><small>Bike</small></div><div class="split"><b>2:01</b><small>T2</small></div><div class="split"><b>1:44:55</b><small>Run</small></div></div>
+ </div>
+</section>
+
+<section id="training">
+ <div class="sectionTop"><h2>The training ledger</h2><p>Every documented workout I can reconstruct from May 18 through now. The totals are live: new logged workouts roll straight into the numbers.</p></div>
+ <div class="stats">
+  <div class="stat"><div class="statn" id="nSessions">—</div><div class="statl">DOCUMENTED SESSIONS</div></div>
+  <div class="stat"><div class="statn" id="nHours">—</div><div class="statl">DOCUMENTED HOURS</div></div>
+  <div class="stat"><div class="statn" id="nBike">—</div><div class="statl">BIKE MILES</div></div>
+  <div class="stat"><div class="statn" id="nRun">—</div><div class="statl">RUN MILES</div></div>
+  <div class="stat"><div class="statn" id="nSwim">—</div><div class="statl">SWIM YARDS</div></div>
+  <div class="stat"><div class="statn" id="nStrength">—</div><div class="statl">EXPLICIT STRENGTH SESSIONS</div></div>
+ </div>
+ <div class="note">For early Notes entries marked COMPLETE, I use the scheduled workout when the completion note does not restate every metric. If I logged an actual value, the actual value wins.</div>
+
+ <div class="trainingGrid">
+  <div class="sticky">
+   <div class="card" style="padding:20px"><div class="kicker">Weekly volume</div><h3 style="font-size:29px;margin:4px 0 15px">Hours logged</h3><div class="chart" id="chart"></div><div class="note">Hover the bars for week + hours.</div></div>
+  </div>
+  <div>
+   <div class="tabs" id="tabs"></div>
+   <div class="workouts" id="workouts"></div>
+   <button class="btn alt load" id="loadMore">Show more workouts</button>
+  </div>
+ </div>
+</section>
+
+<section id="impact">
+ <div class="sectionTop"><h2>What the fundraising can do</h2><p>I wanted the campaign to be clear about actual impact — things you can picture, not just generic “community support.” These are the Foundation programs that stood out to me.</p></div>
+ <div class="impactgrid">
+  <div class="impact" style="background-image:url('assets/foodbank.jpg')"><div class="icopy"><div class="kicker">Community grants</div><h3>Schools, youth programs, food banks & community services</h3><p>Foundation grants support local organizations that serve communities year-round.</p></div></div>
+  <div class="impact" style="background-image:url('assets/swim.jpg')"><div class="icopy"><div class="num">100,000+</div><h3>swim lessons planned</h3><p>Across 27 communities over the next three years through Swim Ready.</p></div></div>
+  <div class="impact" style="background-image:url('assets/bikes.jpg')"><div class="icopy"><div class="num">1,000</div><h3>bikes each year</h3><p>Bicycles and helmets for youth through Boys & Girls Clubs, YMCA partners, school districts and The Anna Foundation in South Africa.</p></div></div>
+  <div class="impact" style="background-image:url('assets/kidsrun.jpg')"><div class="icopy"><div class="num">6,200+</div><h3>IRONKIDS scholarships planned</h3><p>Through 2029, helping young athletes get access to sport and stay active.</p></div></div>
+ </div>
+ <div class="card story" style="margin-top:18px"><div class="kicker">Project Kona</div><h3>$1 million for Kailua-Kona and surrounding communities.</h3><p>The Foundation's Kona initiative includes goals of 10,000 swim lessons, 1,000 bikes, and $400,000 in additional program and community grants.</p></div>
+</section>
+
+<section id="faq">
+ <div class="sectionTop"><h2>FAQ</h2><p>A little more context on me, Kona, Team IMF, and the Foundation.</p></div>
+ <div class="faq">
+  <div class="fi"><button class="fq">Who are you?<span class="plus">+</span></button><div class="fa"><p>I'm Walker Wells. I live in San Francisco and spend most of my time building a company. Outside of work, endurance sports have become a major part of my life, and this site is my public log of the build to Kona.</p></div></div>
+  <div class="fi"><button class="fq">Why does Kona matter to you?<span class="plus">+</span></button><div class="fa"><p>There is a family connection. My grandfather was into triathlon and had always wanted to race Kona, but passed away before he had the chance. My dad also raced triathlons and attended Kona as a spectator, but never raced it himself. Getting to compete there feels meaningful for that reason beyond the race itself.</p></div></div>
+  <div class="fi"><button class="fq">What exactly is Kona?<span class="plus">+</span></button><div class="fa"><p>The IRONMAN World Championship in Kona is the sport's iconic full-distance championship in Hawaiʻi: a 2.4-mile swim, 112-mile bike, and 26.2-mile marathon.</p></div></div>
+  <div class="fi"><button class="fq">How are you racing the World Championship?<span class="plus">+</span></button><div class="fa"><p>I was selected for one of a limited number of Team IMF World Championship entries. My entry is secured through the program, and I've committed to raise $50,000 for the IRONMAN Foundation by September 2027.</p></div></div>
+  <div class="fi"><button class="fq">Where does the $50,000 go?<span class="plus">+</span></button><div class="fa"><p>The money supports the IRONMAN Foundation's charitable work, including youth swim safety, bikes and helmets for kids, IRONKIDS scholarships, food banks and community services, schools and youth programs, and local nonprofit grants. The impact section above highlights the programs that stood out most to me.</p></div></div>
+  <div class="fi"><button class="fq">Can I follow the training?<span class="plus">+</span></button><div class="fa"><p>Yes. The training ledger is meant to show the full build rather than only the race result. It includes the history from my original training notes, TrainingPeaks, Santa Cruz race day, and new workouts going forward.</p></div></div>
+ </div>
+</section>
+
+<section id="donate"><div class="cta"><div class="kicker">Road to Kona · Team IMF</div><h2>World Championship. 140.6 miles. $50,000 of impact.</h2><p>If you'd like to support the campaign, you can donate, sponsor, offer a matching gift, share it, or introduce me to someone who may want to get involved.</p><a class="btn" id="donateBtn" href="#">Official donation page coming soon</a><a class="btn alt" id="imfBtn" href="#" style="margin-left:8px">About the Foundation</a><div class="adminHint">Workout logging can be connected to a Google Sheet / Google Form so I can update this from my phone without editing the website.</div></div></section>
+
+
+<div class="modalBack" id="adminModal">
+ <div class="modal">
+  <div class="modalHead"><div><div class="kicker">Private admin</div><h3 id="adminTitle">Add to the site</h3></div><button class="x" id="adminClose">×</button></div>
+
+  <div id="loginView">
+    <div class="field"><label>Password</label><input id="adminPassword" type="password" placeholder="Password"></div>
+    <button class="btn" id="adminLogin" style="margin-top:14px">Continue</button>
+    <div class="saveStatus" id="loginStatus"></div>
+  </div>
+
+  <div id="choiceView" style="display:none">
+    <p style="color:var(--muted);margin-top:0">What do you want to add?</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button class="card" id="chooseWorkout" style="padding:24px;text-align:left;color:white;cursor:pointer">
+        <div class="kicker">Training</div><h3 style="font-size:28px;margin-top:5px">+ Workout</h3>
+        <p style="color:var(--muted);margin-bottom:0">Add a ride, run, swim, strength session, race, or other workout.</p>
+      </button>
+      <button class="card" id="chooseDonation" style="padding:24px;text-align:left;color:white;cursor:pointer">
+        <div class="kicker">Fundraising</div><h3 style="font-size:28px;margin-top:5px">+ Donation</h3>
+        <p style="color:var(--muted);margin-bottom:0">Add a donation and update the public $50K progress tracker.</p>
+      </button>
+    </div>
+  </div>
+
+  <div id="workoutView" style="display:none">
+   <button class="btn alt" id="backFromWorkout" style="padding:8px 12px;margin-bottom:14px">← Back</button>
+   <div class="formGrid">
+    <div class="field"><label>Date</label><input id="aDate" type="date"></div>
+    <div class="field"><label>Type</label><select id="aType"><option>Bike</option><option>Run</option><option>Swim</option><option>Strength</option><option>Race</option><option>Other</option></select></div>
+    <div class="field full"><label>Workout title</label><input id="aTitle" placeholder="e.g. Hill repeats"></div>
+    <div class="field"><label>Duration (hours)</label><input id="aHours" type="number" step=".01" placeholder="1.25"></div>
+    <div class="field"><label>Strength session?</label><select id="aStrength"><option value="0">No</option><option value="1">Yes</option></select></div>
+    <div class="field"><label>Bike miles</label><input id="aBike" type="number" step=".01"></div>
+    <div class="field"><label>Run miles</label><input id="aRun" type="number" step=".01"></div>
+    <div class="field"><label>Swim yards</label><input id="aSwim" type="number" step="1"></div>
+    <div class="field full"><label>Summary</label><textarea id="aSummary" placeholder="Short public description"></textarea></div>
+    <div class="field full"><label>Details</label><textarea id="aDetails" placeholder="Power, pace, HR, elevation, intervals, etc."></textarea></div>
+   </div>
+   <button class="btn" id="saveWorkout" style="margin-top:16px">Save workout</button>
+   <div class="saveStatus" id="saveStatus"></div>
+  </div>
+
+  <div id="donationView" style="display:none">
+   <button class="btn alt" id="backFromDonation" style="padding:8px 12px;margin-bottom:14px">← Back</button>
+   <div class="formGrid">
+    <div class="field"><label>Date</label><input id="dDate" type="date"></div>
+    <div class="field"><label>Amount ($)</label><input id="dAmount" type="number" step=".01" min="0" placeholder="500"></div>
+    <div class="field"><label>Donor / source</label><input id="dDonor" placeholder="Name, company, event, etc."></div>
+    <div class="field"><label>Show donor publicly?</label><select id="dPublic"><option value="1">Yes</option><option value="0">No — count amount only</option></select></div>
+    <div class="field full"><label>Note</label><textarea id="dNote" placeholder="Optional note"></textarea></div>
+   </div>
+   <button class="btn" id="saveDonation" style="margin-top:16px">Save donation</button>
+   <div class="saveStatus" id="donationStatus"></div>
+  </div>
+ </div>
+</div>
+<footer>Walker Wells · Road to Kona 2027 · Personal fundraising website. Not an official IRONMAN Foundation website.</footer>
+
+<script src="config.js"></script>
+<script src="workouts-data.js"></script>
+<script>
+const C=window.KONA_CONFIG, fmt=(n,d=0)=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:d});
+const num=x=>{const n=parseFloat(x);return Number.isFinite(n)?n:0};
+document.getElementById('imfBtn').href=C.campaign.officialImfUrl;
+if(C.campaign.donateUrl){const b=document.getElementById('donateBtn');b.href=C.campaign.donateUrl;b.textContent='Donate to the campaign'}
+function renderFundraising(total, donations=[]){
+ document.getElementById('raisedText').textContent='$'+fmt(total)+' raised';
+ setTimeout(()=>document.getElementById('fundBar').style.width=Math.min(100,total/C.campaign.goal*100)+'%',150);
+ const recent=document.getElementById('donationRecent');
+ const publicDonations=donations.filter(d=>d.public_name && d.donor_name).sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,3);
+ recent.innerHTML=publicDonations.length ? '<b>Recent support:</b> ' + publicDonations.map(d=>`${d.donor_name} · $${fmt(d.amount)}`).join(' &nbsp;•&nbsp; ') : '';
+}
+renderFundraising(C.campaign.raised,[]);
+document.querySelectorAll('.fq').forEach(q=>q.onclick=()=>q.parentElement.classList.toggle('open'));
+
+function normalize(r){return {date:r.date||'',type:r.type||'Training',title:r.title||'Workout',duration_hours:num(r.duration_hours),bike_miles:num(r.bike_miles),run_miles:num(r.run_miles),swim_yards:num(r.swim_yards),strength:num(r.strength),summary:r.summary||'',details:r.details||'',source:r.source||'Manual'}}
+function csv(text){
+ let lines=text.trim().split(/\r?\n/);if(lines.length<2)return[];let heads=lines[0].split(',').map(x=>x.trim());let out=[];
+ for(let li=1;li<lines.length;li++){let line=lines[li],vals=[],cur='',q=false;for(let i=0;i<line.length;i++){let ch=line[i];if(ch=='"'){if(q&&line[i+1]=='"'){cur+='"';i++}else q=!q}else if(ch==','&&!q){vals.push(cur);cur=''}else cur+=ch}vals.push(cur);let o={};heads.forEach((h,i)=>o[h]=vals[i]||'');out.push(normalize(o))}
+ return out
+}
+async function loadData(){
+ let historical=(window.WORKOUTS||[]).map(normalize);
+ if(C.data.supabaseUrl && C.data.supabaseAnonKey && location.protocol !== 'file:'){
+   try{
+     let r=await fetch(C.data.supabaseUrl.replace(/\/$/,'')+'/rest/v1/workouts_live?select=*&order=date.asc',{
+       headers:{apikey:C.data.supabaseAnonKey,Authorization:'Bearer '+C.data.supabaseAnonKey}
+     });
+     if(r.ok){
+       let live=(await r.json()).map(normalize);
+       return historical.concat(live);
+     }
+   }catch(e){}
+ }
+ return historical;
+}
+let rows=[], visible=14, active='All';
+function totals(data){return data.reduce((a,r)=>{a.sessions++;a.hours+=r.duration_hours;a.bike+=r.bike_miles;a.run+=r.run_miles;a.swim+=r.swim_yards;a.strength+=r.strength;return a},{sessions:0,hours:0,bike:0,run:0,swim:0,strength:0})}
+function stats(t){document.getElementById('nSessions').textContent=fmt(t.sessions);document.getElementById('nHours').textContent=fmt(t.hours,1);document.getElementById('nBike').textContent=fmt(t.bike,1);document.getElementById('nRun').textContent=fmt(t.run,1);document.getElementById('nSwim').textContent=fmt(t.swim);document.getElementById('nStrength').textContent=fmt(t.strength)}
+function tabs(){let types=['All',...new Set(rows.map(r=>r.type))],el=document.getElementById('tabs');el.innerHTML='';types.forEach(t=>{let b=document.createElement('button');b.className='tab'+(t===active?' active':'');b.textContent=t;b.onclick=()=>{active=t;visible=14;tabs();render()};el.appendChild(b)})}
+function render(){let data=(active==='All'?rows:rows.filter(r=>r.type===active)).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,visible),el=document.getElementById('workouts');el.innerHTML='';data.forEach(r=>{let dist=[];if(r.bike_miles)dist.push(fmt(r.bike_miles,1)+' mi bike');if(r.run_miles)dist.push(fmt(r.run_miles,1)+' mi run');if(r.swim_yards)dist.push(fmt(r.swim_yards)+' yd swim');if(r.strength)dist.push('strength');let d=document.createElement('div');d.className='w';d.innerHTML=`<div class="wtop"><div><div class="wdate">${new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}</div><div class="wtitle">${r.title}</div></div><div class="badge">${r.type}</div></div><p>${r.summary}</p><div class="wdetails">${[r.duration_hours?fmt(r.duration_hours,2)+' hr':'',...dist,r.details].filter(Boolean).join(' · ')}</div><div class="source">${r.source}</div>`;el.appendChild(d)});document.getElementById('loadMore').style.display=data.length<(active==='All'?rows.length:rows.filter(r=>r.type===active).length)?'inline-flex':'none'}
+document.getElementById('loadMore').onclick=()=>{visible+=20;render()}
+function chart(){let weeks={};rows.forEach(r=>{let d=new Date(r.date+'T12:00:00');let day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);let k=d.toISOString().slice(0,10);weeks[k]=(weeks[k]||0)+r.duration_hours});let ks=Object.keys(weeks).sort(),vals=ks.map(k=>weeks[k]),max=Math.max(1,...vals),el=document.getElementById('chart');el.innerHTML='';ks.forEach((k,i)=>{let b=document.createElement('div');b.className='bar';b.style.height=(8+92*vals[i]/max)+'%';b.dataset.tip=new Date(k+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})+' · '+fmt(vals[i],1)+'h';el.appendChild(b)})}
+loadData().then(d=>{rows=d;stats(totals(rows));tabs();render();chart()}); refreshFundraising();
+
+
+async function loadDonations(){
+ if(C.data.supabaseUrl && C.data.supabaseAnonKey && location.protocol !== 'file:'){
+   try{
+     const r=await fetch(C.data.supabaseUrl.replace(/\/$/,'')+'/rest/v1/donations_live?select=*&order=date.desc',{
+       headers:{apikey:C.data.supabaseAnonKey,Authorization:'Bearer '+C.data.supabaseAnonKey}
+     });
+     if(r.ok)return await r.json();
+   }catch(e){}
+ }
+ return [];
+}
+async function refreshFundraising(){
+ const ds=await loadDonations();
+ const total=C.campaign.raised + ds.reduce((s,d)=>s+num(d.amount),0);
+ renderFundraising(total,ds);
+}
+
+const modal=document.getElementById('adminModal'), openBtn=document.getElementById('adminOpen'), closeBtn=document.getElementById('adminClose');
+const loginView=document.getElementById('loginView'), choiceView=document.getElementById('choiceView'), workoutView=document.getElementById('workoutView'), donationView=document.getElementById('donationView');
+let sessionPassword='';
+function showChoice(){
+ document.getElementById('adminTitle').textContent='Add to the site';
+ loginView.style.display='none';choiceView.style.display='block';workoutView.style.display='none';donationView.style.display='none';
+}
+function showWorkout(){
+ document.getElementById('adminTitle').textContent='Add workout';
+ choiceView.style.display='none';workoutView.style.display='block';donationView.style.display='none';
+ document.getElementById('aDate').value=new Date().toISOString().slice(0,10);
+}
+function showDonation(){
+ document.getElementById('adminTitle').textContent='Add donation';
+ choiceView.style.display='none';workoutView.style.display='none';donationView.style.display='block';
+ document.getElementById('dDate').value=new Date().toISOString().slice(0,10);
+}
+openBtn.onclick=()=>{modal.classList.add('open');if(sessionPassword)showChoice();else{loginView.style.display='block';choiceView.style.display='none';workoutView.style.display='none';donationView.style.display='none'}};
+closeBtn.onclick=()=>modal.classList.remove('open');
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open')});
+document.getElementById('adminLogin').onclick=()=>{
+ const p=document.getElementById('adminPassword').value;
+ if(p===C.admin.password){sessionPassword=p;showChoice();document.getElementById('loginStatus').textContent=''}
+ else {let s=document.getElementById('loginStatus');s.textContent='Wrong password.';s.className='saveStatus err'}
+};
+document.getElementById('chooseWorkout').onclick=showWorkout;
+document.getElementById('chooseDonation').onclick=showDonation;
+document.getElementById('backFromWorkout').onclick=showChoice;
+document.getElementById('backFromDonation').onclick=showChoice;
+
+async function saveRemoteWorkout(payload){
+ if(!(C.data.supabaseUrl&&C.data.supabaseAnonKey)) throw new Error('Live saving is not configured yet. Add Supabase URL + anon key in config.js.');
+ const u=C.data.supabaseUrl.replace(/\/$/,'')+'/rest/v1/rpc/add_workout';
+ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json',apikey:C.data.supabaseAnonKey,Authorization:'Bearer '+C.data.supabaseAnonKey},body:JSON.stringify(payload)});
+ if(!r.ok){let t=await r.text();throw new Error(t||'Could not save workout')}
+ return await r.json();
+}
+async function saveRemoteDonation(payload){
+ if(!(C.data.supabaseUrl&&C.data.supabaseAnonKey)) throw new Error('Live saving is not configured yet. Add Supabase URL + anon key in config.js.');
+ const u=C.data.supabaseUrl.replace(/\/$/,'')+'/rest/v1/rpc/add_donation';
+ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json',apikey:C.data.supabaseAnonKey,Authorization:'Bearer '+C.data.supabaseAnonKey},body:JSON.stringify(payload)});
+ if(!r.ok){let t=await r.text();throw new Error(t||'Could not save donation')}
+ return await r.json();
+}
+document.getElementById('saveWorkout').onclick=async()=>{
+ const s=document.getElementById('saveStatus');s.textContent='Saving…';s.className='saveStatus';
+ const payload={
+   p_password:sessionPassword,
+   p_date:document.getElementById('aDate').value,
+   p_type:document.getElementById('aType').value,
+   p_title:document.getElementById('aTitle').value||document.getElementById('aType').value+' workout',
+   p_duration_hours:num(document.getElementById('aHours').value),
+   p_bike_miles:num(document.getElementById('aBike').value),
+   p_run_miles:num(document.getElementById('aRun').value),
+   p_swim_yards:num(document.getElementById('aSwim').value),
+   p_strength:num(document.getElementById('aStrength').value),
+   p_summary:document.getElementById('aSummary').value,
+   p_details:document.getElementById('aDetails').value
+ };
+ try{
+   await saveRemoteWorkout(payload);
+   s.textContent='Saved. Updating the site…';s.className='saveStatus ok';
+   rows=await loadData();stats(totals(rows));tabs();render();chart();
+   setTimeout(()=>{showChoice();s.textContent='';},500);
+ }catch(e){s.textContent=e.message;s.className='saveStatus err'}
+};
+document.getElementById('saveDonation').onclick=async()=>{
+ const s=document.getElementById('donationStatus');s.textContent='Saving…';s.className='saveStatus';
+ const payload={
+   p_password:sessionPassword,
+   p_date:document.getElementById('dDate').value,
+   p_amount:num(document.getElementById('dAmount').value),
+   p_donor_name:document.getElementById('dDonor').value,
+   p_public_name:document.getElementById('dPublic').value==='1',
+   p_note:document.getElementById('dNote').value
+ };
+ try{
+   await saveRemoteDonation(payload);
+   s.textContent='Saved. Fundraising tracker updated.';s.className='saveStatus ok';
+   await refreshFundraising();
+   setTimeout(()=>{showChoice();s.textContent='';},500);
+ }catch(e){s.textContent=e.message;s.className='saveStatus err'}
+};
+
+</script>
+</body></html>
