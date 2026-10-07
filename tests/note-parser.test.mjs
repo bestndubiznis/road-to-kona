@@ -12,5 +12,5 @@ test('sets before exercise names, per-side work, and last-set variation',()=>{
  assert.equal(r.exercises.length,5);assert.equal(r.exercises[0].unit,'bodyweight');assert.equal(r.exercises[1].sets[0].weight,40);assert.match(r.exercises[2].name,/per side/);assert.deepEqual(r.exercises[3].sets.map(s=>s.reps),[8,8,10]);assert.equal(r.exercises[4].sets[0].weight,27.5);assert.ok(r.issues.some(i=>i.includes('per hand or total')));
 });
 test('timed holds and omitted reps are preserved without invented rep sets',()=>{
- const note='bodyweight single leg iso glute bridges 30 seconds each side 3 sets, weighted ab crunches pull down with rope at 50 lbs 3 sets';const r=parseWorkoutNote(note);assert.equal(r.exercises.length,0);assert.equal(r.unparsed.length,2);assert.ok(r.issues.some(i=>i.includes('Timed hold')));assert.ok(r.issues.some(i=>i.includes('Reps missing')));assert.equal(r.original,note);
+ const note='bodyweight single leg iso glute bridges 30 seconds each side 3 sets, weighted ab crunches pull down with rope at 50 lbs 3 sets';const r=parseWorkoutNote(note);assert.equal(r.exercises.length,1);assert.equal(r.exercises[0].sets[0].seconds,30);assert.equal(r.exercises[0].sets.length,3);assert.equal(r.unparsed.length,1);assert.ok(r.issues.some(i=>i.includes('Reps missing')));assert.equal(r.original,note);
 });

@@ -30,12 +30,12 @@ export function weekly(rows, end = localDate(), count = 12) {
   }
   return out;
 }
-export function setVolume(sets) { return sets.reduce((n, s) => n + number(s.weight) * number(s.reps), 0); }
+export function setVolume(sets) { return sets.reduce((n, s) => n + (s.seconds != null ? 0 : number(s.weight) * number(s.reps)), 0); }
 export function strengthHistory(rows, exercise) {
   return completed(rows).flatMap(r => (r.exercises || []).filter(e => e.name.toLowerCase() === exercise.toLowerCase()).map(e => {
     const sets = (e.sets || []).filter(s => s.kind !== 'warmup');
     // Estimates are only meaningful for loaded working sets with 1–10 reps.
-    return { date: r.date, unit: e.unit || 'lb', volume: setVolume(sets), sets: sets.length, best: Math.max(0, ...sets.map(s => number(s.weight))), estimatedMax: Math.max(0, ...sets.filter(s => s.reps >= 1 && s.reps <= 10 && s.weight > 0).map(s => number(s.weight) * (1 + number(s.reps) / 30))) };
+    return { date: r.date, unit: e.unit || 'lb', volume: setVolume(sets), seconds: sets.reduce((n,s)=>n+number(s.seconds),0), sets: sets.length, best: Math.max(0, ...sets.map(s => number(s.weight))), estimatedMax: Math.max(0, ...sets.filter(s => s.seconds == null && s.reps >= 1 && s.reps <= 10 && s.weight > 0).map(s => number(s.weight) * (1 + number(s.reps) / 30))) };
   })).sort((a, b) => a.date.localeCompare(b.date));
 }
 export function publicWorkout(r) {
@@ -52,7 +52,11 @@ export function validateWorkout(r) {
   if ((r.exercises || []).length > 50) throw new Error('Maximum 50 exercises per workout.');
   for (const e of r.exercises || []) {
     if (!e.name?.trim() || !['lb','kg','bodyweight'].includes(e.unit) || !Array.isArray(e.sets) || e.sets.length > 100) throw new Error('Each exercise needs a name, a unit, and valid sets.');
-    for (const s of e.sets) if (!Number.isInteger(Number(s.reps)) || s.reps < 1 || s.reps > 1000 || !Number.isFinite(Number(s.weight)) || s.weight < 0 || (s.rpe != null && (s.rpe < 1 || s.rpe > 10))) throw new Error('Sets need positive whole reps, nonnegative weight, and effort from 1 to 10.');
+    for (const s of e.sets) {
+      const timed=s.seconds != null;
+      const valid=timed ? Number.isFinite(Number(s.seconds)) && s.seconds > 0 && s.seconds <= 86400 && (s.reps == null || s.reps === '') : Number.isInteger(Number(s.reps)) && s.reps >= 1 && s.reps <= 1000;
+      if(!valid || s.weight === '' || s.weight == null || !Number.isFinite(Number(s.weight)) || s.weight < 0 || (s.rpe != null && (s.rpe < 1 || s.rpe > 10))) throw new Error('Sets need positive reps or seconds, nonnegative load, and effort from 1 to 10.');
+    }
   }
   return r;
 }
