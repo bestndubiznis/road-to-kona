@@ -14,3 +14,5 @@ test('sets before exercise names, per-side work, and last-set variation',()=>{
 test('timed holds and omitted reps are preserved without invented rep sets',()=>{
  const note='bodyweight single leg iso glute bridges 30 seconds each side 3 sets, weighted ab crunches pull down with rope at 50 lbs 3 sets';const r=parseWorkoutNote(note);assert.equal(r.exercises.length,1);assert.equal(r.exercises[0].sets[0].seconds,30);assert.equal(r.exercises[0].sets.length,3);assert.equal(r.unparsed.length,1);assert.ok(r.issues.some(i=>i.includes('Reps missing')));assert.equal(r.original,note);
 });
+
+test('minute holds convert to seconds without invented reps',()=>{const r=parseWorkoutNote('Bodyweight plank 3 sets of 1 minute');assert.equal(r.exercises[0].sets[0].seconds,60);assert.equal(r.exercises[0].sets[0].reps,undefined);});
