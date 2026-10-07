@@ -1,4 +1,4 @@
-import {setupJournal,paintJournal} from './journal-view.mjs';
+import {setupJournal,paintJournal} from './journal-view.mjs?v=weekly1';
 setupJournal();
 const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
