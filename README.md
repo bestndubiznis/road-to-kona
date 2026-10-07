@@ -30,7 +30,7 @@ Optional Intervals.icu connectivity collects completed device workouts while kee
 - `FITNESS_SETUP.sql`: private tables, RLS, and permissions. Browser roles have no table access; fitness-api verifies the owner's email with Supabase Auth `getUser` before private operations.
 - `supabase/functions/fitness-api/index.ts`: public projection, private CRUD, imports, and provider sync. JWT gateway verification is disabled because anonymous reads are allowed; function-level owner JWT validation protects every private action. A private scheduler key grants only provider synchronization.
 - `lib/fitness.mjs`: shared parsing, validation, projections, totals, and progress calculations. Keep its function copy in sync.
-- Hourly Supabase Cron runs `fitness-hourly-sync`. It reads its key from restricted server-side settings, not a public source file.
+- Supabase Cron runs `fitness-hourly-sync` every 15 minutes, refreshing provider data hourly and checking the 8:30 p.m. Pacific notification window. It reads its key from restricted server-side settings, not a public source file.
 - `fitness_followups` tracks once-per-day chat prompts. See `FITNESS_OPERATIONS.md` for conversational logging instructions.
 - Dependencies are pinned: vendored browser Supabase JS 2.117.2 and the same Edge Function version.
 
@@ -39,3 +39,17 @@ Optional Intervals.icu connectivity collects completed device workouts while kee
 Run `node --test tests/fitness.test.mjs` and `node --check app.mjs`. Preview with `python3 -m http.server 8765`. Verify public API responses never contain notes, sets, RPE, recovery, or credentials; private endpoints must reject anonymous and non-owner sessions.
 
 The existing campaign database tables are retained as historical records. New fitness data is stored only in the private fitness tables.
+
+## Phone notifications
+
+Add the site to your phone home screen and sign in. On iPhone, use Safari → Share → Add to Home Screen, then open the icon. In the private log choose **Enable notifications** and allow your phone's permission prompt. Use **Send a test notification** to verify real delivery. Phone delivery cannot be verified until a real device subscribes.
+
+Reminders are sent around 8:30 p.m. America/Los_Angeles only when a strength prescription is unfinished. The server checks every 15 minutes, follows daylight saving, retries provider failures up to three times, and deduplicates per device/date. Expired subscriptions are removed. Tapping opens a strength logging form; this is a mobile form workflow, not an SMS/chat bot. The notification text is generic and contains no sets or private notes.
+
+Browser subscriptions and VAPID keys are private in Supabase. The notification worker intentionally caches no pages or private data. Dependencies: web-push 3.6.7 on the server. Chat reminders are a fallback until a phone subscription is configured; the chat automation should avoid duplicates on days with delivered phone reminders.
+
+## Conversational workout notes
+
+After a reminder, write what you did in **Tell me what you did**, choose **Break note into sets**, review the proposed rows, and choose **Use these exercise rows** before saving. The local helper recognizes common phrases such as “squats, three sets of five at 135 lb” and “bench 95 lb for 3 sets of 8.” It supports varying loads in individual sets and explicit bodyweight. Original notes always remain private.
+
+This is conservative pattern extraction, not an unrestricted language model. Missing loads/units are flagged and must be entered or explicitly marked bodyweight. Dumbbell load basis is preserved or flagged; subjective notes and cardio descriptions remain in the original note. Use the measured duration/distance fields for cardio. Nothing is silently sent to an external AI service.

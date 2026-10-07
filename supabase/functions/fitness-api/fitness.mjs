@@ -3,6 +3,15 @@ export function localDate(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 export function completed(rows) { return rows.filter(r => r.status !== 'planned' && r.status !== 'skipped'); }
+export function strengthDue(rows, today = localDate()) {
+  const actuals = completed(rows).some(r => r.date === today && (r.type === 'Strength' || number(r.strength) > 0) && (r.private_notes?.trim() || r.exercises?.some(e => e.sets?.length)));
+  if (actuals) return [];
+  return rows.filter(r => r.date === today && r.status === 'planned' && (r.type === 'Strength' || number(r.strength) > 0));
+}
+export function pushWindow(date = new Date()) {
+  const time = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+  return time >= '20:30' && time < '22:00';
+}
 export function totals(rows) {
   return completed(rows).reduce((a, r) => ({ sessions: a.sessions + 1, hours: a.hours + number(r.duration_hours), bike: a.bike + number(r.bike_miles), run: a.run + number(r.run_miles), swim: a.swim + number(r.swim_yards), strength: a.strength + (number(r.strength) > 0 || r.type === 'Strength' ? 1 : 0) }), { sessions: 0, hours: 0, bike: 0, run: 0, swim: 0, strength: 0 });
 }

@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import { publicWorkout, validateWorkout, parseCalendar, fromIntervals, localDate } from './fitness.mjs';
+import { vapidKeys, endpointHash, validateSubscription, sendPush, sendDuePush } from './push.ts';
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-fitness-sync-key', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}');
@@ -87,11 +88,16 @@ Deno.serve(async (req: Request) => {
     }
     const s = await settings();
     const scheduled = !!s.sync_key && req.headers.get('x-fitness-sync-key') === s.sync_key;
-    // Custom auth: a scheduler key ONLY grants sync; every other private action needs a verified owner JWT.
+    // Custom auth: a scheduler key only grants background sync and due reminders; every other private action needs a verified owner JWT.
     if (req.method === 'POST' && scheduled) {
       const body = await req.json();
-      if (body.action !== 'sync') return reply({ error: 'Scheduler only supports sync.' },403);
-      return reply(await sync(s));
+      if (body.action === 'sync') return reply(await sync(s));
+      if (body.action === 'tick') {
+        const stale = !s.last_sync?.at || Date.now()-new Date(s.last_sync.at).getTime() > 55*60000;
+        const result = stale ? await sync(s) : s.last_sync;
+        return reply({ sync:result,push:await sendDuePush(db,await records(),s) });
+      }
+      return reply({ error: 'Scheduler only supports synchronization and due reminders.' },403);
     }
     if (!await isOwner(req,s)) return reply({ error: 'Sign in with the owner email to access the private log.' },401);
     if (req.method === 'GET') {
@@ -100,6 +106,22 @@ Deno.serve(async (req: Request) => {
     if (req.method !== 'POST') return reply({ error: 'Method not allowed.' },405);
     if (Number(req.headers.get('content-length') || 0) > 2000000) return reply({ error: 'Request too large.' },413);
     const body = await req.json();
+    if (body.action === 'push_key') return reply({ publicKey:(await vapidKeys(db)).publicKey });
+    if (body.action === 'subscribe') {
+      const subscription = validateSubscription(body.subscription);
+      check(await db.from('fitness_push_subscriptions').upsert({endpoint_hash:await endpointHash(subscription.endpoint),subscription}));
+      return reply({ subscribed:true });
+    }
+    if (body.action === 'unsubscribe') {
+      check(await db.from('fitness_push_subscriptions').delete().eq('endpoint_hash',await endpointHash(String(body.endpoint))));
+      return reply({ unsubscribed:true });
+    }
+    if (body.action === 'push_test') {
+      const row = check(await db.from('fitness_push_subscriptions').select('*').eq('endpoint_hash',await endpointHash(String(body.endpoint))).single());
+      const status = await sendPush(row.subscription,await vapidKeys(db),true);
+      if (status < 200 || status >= 300) throw new Error('Push service returned HTTP '+status+'. Try enabling notifications again.');
+      return reply({ sent:true });
+    }
     if (body.action === 'save') {
       const row = validateWorkout(body.workout); const id = row.id; delete row.id; delete row.external_id;
       row.title = String(row.title || row.type+' workout').slice(0,300);
