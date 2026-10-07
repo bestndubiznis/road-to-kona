@@ -1,3 +1,4 @@
+import {createMuscleMap} from './muscle-view.mjs';
 import {dateStart, progressWeeks, filterWorkouts, bestEfforts, clockTime, SANTA_CRUZ} from './lib/progress.mjs';
 import { parseWorkoutNote } from './lib/note-parser.mjs';
 import { setupPush } from './push.mjs';
@@ -60,7 +61,7 @@ function paintLog() {
 }
 function paintPlans() {
  const planned=rows.filter(r=>r.status==='planned' && r.date>=localDate()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,12);
- $('plannedList').innerHTML=planned.length?planned.map(r=>`<article class="plan-card"><div class="eyebrow">${pretty(r.date)} · ${esc(r.type)}</div><h3>${esc(r.title)}</h3><p class="fine">${esc(r.source)}</p><button class="button outline small complete-plan" data-id="${r.id}">Log actual workout ↗</button></article>`).join(''):'<p class="muted">Connect your TrainingPeaks calendar below, or add a prescription. Only verified planned strength days will trigger a lifting check-in.</p>';
+ $('plannedList').innerHTML=planned.length?planned.map(r=>`<article class="plan-card"><div class="eyebrow">${pretty(r.date)} · ${esc(r.type)}</div><h3>${esc(r.title)}</h3><p class="fine">${r.planned_duration_hours?fmt(r.planned_duration_hours*60)+' min prescribed · ':''}${esc(r.source)}</p><button class="button outline small complete-plan" data-id="${r.id}">Log actual workout ↗</button></article>`).join(''):'<p class="muted">Connect your TrainingPeaks calendar below, or add a prescription. Only verified planned strength days will trigger a lifting check-in.</p>';
  document.querySelectorAll('.complete-plan').forEach(b=>b.onclick=()=>openWorkout({...rows.find(r=>r.id===b.dataset.id),status:'completed'}));
 }
 function paintRecovery() {
@@ -77,7 +78,7 @@ function paintConnections() {
 }
 function render() {
  $('signIn').textContent=owner?'My private log ↗':'Private log ↗'; $('modeLabel').textContent=owner?'YOUR PRIVATE LOG':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
- document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintProgress();paintBest();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
+ document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
  const version=++refreshVersion, token=session?.access_token;
@@ -123,6 +124,7 @@ $('confirmImport').onclick=async()=>{const b=$('confirmImport');b.disabled=true;
 for(const button of document.querySelectorAll('[data-close]'))button.onclick=()=>$(button.dataset.close).close();
 function openNotificationWorkout(){requireOwner(()=>{const plan=rows.find(r=>r.date===localDate() && r.status==='planned' && (r.type==='Strength'||r.strength>0));openWorkout(plan?{...plan,status:'completed'}:null,'Strength');});}
 const push=setupPush({api,requireOwner,openLog:()=>{notificationPending=true;if(owner){notificationPending=false;openNotificationWorkout();}else $('loginDialog').showModal();}});
+const muscleMap=createMuscleMap({getRows:()=>rows,isOwner:()=>owner});
 render();
 if(auth){const result=await auth.auth.getSession();session=result.data.session;auth.auth.onAuthStateChange((_event,newSession)=>{session=newSession;if(!session){owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};render();}setTimeout(()=>refresh(),0);});}
 await refresh();
