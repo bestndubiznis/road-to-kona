@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {muscleSummary,exerciseMuscles} from '../lib/muscles.mjs';
+import {muscleSummary,exerciseMuscles,muscleScore} from '../lib/muscles.mjs';
 test('only completed in-range actuals contribute; cardio does not invent sets',()=>{
  const rows=[{date:'2026-10-05',type:'Bike',duration_hours:1},{date:'2026-10-06',type:'Swim',status:'planned'},{date:'2026-01-01',type:'Run'}];
  const {groups}=muscleSummary(rows,{start:'2026-10-01',end:'2026-10-06'});
@@ -16,4 +16,11 @@ test('private working sets map compound movements; warmups and unknown names exc
  assert.equal(privateResult.groups.quads.sets,2);assert.equal(privateResult.groups.glutes.sets,2);assert.equal(privateResult.unmapped,1);
  assert.equal(muscleSummary([row],{end:'2026-10-06'}).groups.quads.sets,0);
  assert.deepEqual(exerciseMuscles('DB Romanian deadlift'),['hamstrings','glutes','back']);
+});
+
+test('both counts mixed sessions once and mode-specific latest dates follow period',()=>{
+ const rows=[{date:'2026-10-04',type:'Bike',exercises:[{name:'Squat',sets:[{seconds:30},{reps:5}]}]},{date:'2026-10-06',type:'Strength',exercises:[{name:'Squat',sets:[{reps:5}]}]}];
+ const g=muscleSummary(rows,{privateDetails:true,start:'2026-10-01',end:'2026-10-06'}).groups.quads;
+ assert.equal(muscleScore(g,'both'),2);assert.equal(muscleScore(g,'strength'),3);assert.equal(muscleScore(g,'endurance'),1);assert.equal(g.enduranceLast,'2026-10-04');assert.equal(g.strengthLast,'2026-10-06');
+ const recent=muscleSummary(rows,{privateDetails:true,start:'2026-10-05',end:'2026-10-06'}).groups.quads;assert.equal(muscleScore(recent,'both'),1);assert.equal(recent.enduranceLast,null);
 });

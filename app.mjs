@@ -1,4 +1,4 @@
-import {createMuscleMap} from './muscle-view.mjs?v=mobile2';
+import {createMuscleMap} from './muscle-view.mjs?v=map3';
 import {dateStart, progressWeeks, filterWorkouts, bestEfforts, clockTime, SANTA_CRUZ} from './lib/progress.mjs';
 import { parseWorkoutNote } from './lib/note-parser.mjs?v=mobile2';
 import { setupPush } from './push.mjs';
