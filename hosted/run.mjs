@@ -15,6 +15,7 @@ try{
  await report({action:'hosted_report',status:'started'});
  browser=await chromium.launch();const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();page.setDefaultTimeout(45000);
  await page.goto('https://app.trainingpeaks.com/',{waitUntil:'domcontentloaded'});
+ const cookies=page.getByRole('button',{name:'Reject All',exact:true});try{await cookies.waitFor({timeout:8000});await cookies.click();}catch{}
  await page.getByRole('textbox',{name:/username|email/i}).fill(process.env.TP_USERNAME);
  await page.locator('input[type="password"]').fill(process.env.TP_PASSWORD);
  await page.getByRole('button',{name:/^log in$|^login$|^sign in$/i}).click();
