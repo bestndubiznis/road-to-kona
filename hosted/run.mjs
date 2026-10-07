@@ -19,22 +19,22 @@ try{
  await page.locator('input[type="password"]').fill(process.env.TP_PASSWORD);
  await page.getByRole('button',{name:/^log in$|^login$|^sign in$/i}).click();
  await page.getByText('Walker Wells',{exact:true}).first().waitFor({timeout:60000});
- stage='export';await page.getByText('Walker Wells',{exact:true}).first().click();await page.getByText('Settings',{exact:true}).first().click();
- await page.getByRole('heading',{name:'Account Settings',exact:true}).waitFor();await page.locator('span').filter({hasText:/^Export Data$/}).click();
+ stage='account-menu';await page.getByText('Walker Wells',{exact:true}).first().click();stage='settings-menu';await page.getByText('Settings',{exact:true}).first().click();
+ stage='settings-dialog';await page.getByRole('heading',{name:'Account Settings',exact:true}).waitFor();stage='export-pane';await page.locator('span').filter({hasText:/^Export Data$/}).click();
  const panel=page.locator('.workoutExport').filter({has:page.getByRole('heading',{name:'Workout Summary',exact:true})});
  const shift=n=>{const d=new Date(localDate()+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return `${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;};
- await panel.locator('input[name="startDate"]').fill(shift(-21));await panel.locator('input[name="endDate"]').fill(shift(14));await panel.getByRole('heading',{name:'Workout Summary'}).click();await panel.getByRole('button',{name:'Export',exact:true}).click();
- const link=page.getByRole('link',{name:/^WorkoutExport-.*\.zip$/});await link.waitFor({timeout:60000});
- const [download]=await Promise.all([page.waitForEvent('download',{timeout:60000}),link.click()]);const path=await download.path();if(!path)throw new Error('Export download failed');
+ stage='export-dates';await panel.locator('input[name="startDate"]').fill(shift(-21));await panel.locator('input[name="endDate"]').fill(shift(14));await panel.getByRole('heading',{name:'Workout Summary'}).click();await panel.getByRole('button',{name:'Export',exact:true}).click();
+ stage='export-link';const link=page.getByRole('link',{name:/^WorkoutExport-.*\.zip$/});await link.waitFor({timeout:60000});
+ stage='download';const [download]=await Promise.all([page.waitForEvent('download',{timeout:60000}),link.click()]);const path=await download.path();if(!path)throw new Error('Export download failed');
  const files=unzipSync(new Uint8Array(await readFile(path))),csvFiles=Object.keys(files).filter(n=>n.toLowerCase().endsWith('.csv'));if(csvFiles.length!==1)throw new Error('Export format changed');
  stage='import';const result=await report({action:'hosted_import',csv:strFromU8(files[csvFiles[0]])});
  // No credentials, workout payloads, browser traces, screenshots, or downloaded exports in CI logs/artifacts.
  console.log(`Hosted check complete: ${result.applied} changes; ${result.review_count} items need review.`);
 }catch{
- if(stage==='login'&&browser)try{
+ if(browser)try{
   const page=browser.contexts()[0]?.pages()[0];
   const controls=await page.evaluate(()=>({inputs:[...document.querySelectorAll('input')].filter(e=>e.offsetWidth||e.offsetHeight).map(e=>({type:e.type,id:e.id,name:e.name,placeholder:e.getAttribute('placeholder'),label:e.getAttribute('aria-label')})),buttons:[...document.querySelectorAll('button,input[type="submit"]')].filter(e=>e.offsetWidth||e.offsetHeight).map(e=>e.tagName==='INPUT'?'submit':e.textContent.trim().slice(0,80)),headings:[...document.querySelectorAll('h1,h2')].map(e=>e.textContent.trim().slice(0,80))}));
-  const u=new URL(page.url());console.log('Sign-in controls: '+JSON.stringify({origin:u.origin,path:u.pathname,...controls}));
+  const u=new URL(page.url());console.log('Runner controls: '+JSON.stringify({stage,origin:u.origin,path:u.pathname,...controls}));
  }catch{}
  if(token)try{await report({action:'hosted_report',status:stage==='login'?'needs_login':'error'});}catch{}
  console.error(stage==='login'?'TrainingPeaks sign-in needs attention.':'Hosted sync failed; review the private connection status.');process.exitCode=1;
