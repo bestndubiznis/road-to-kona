@@ -1,3 +1,4 @@
+import { publicSync } from './public-sync.mjs';
 import { publicPlans } from './public-plans.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import { publicWorkout, validateWorkout, parseCalendar, fromIntervals, localDate } from './fitness.mjs';
@@ -86,7 +87,7 @@ Deno.serve(async (req: Request) => {
     const url = new URL(req.url);
     if (req.method === 'GET' && (!url.searchParams.get('resource') || url.searchParams.get('resource') === 'public')) {
       const rows = await records();
-      return reply({ plans: publicPlans(rows, localDate()), workouts: rows.filter(r => r.status !== 'planned' && r.status !== 'skipped' && r.public_progress !== false).map(publicWorkout) });
+      return reply({ sync: publicSync(await settings()), plans: publicPlans(rows, localDate()), workouts: rows.filter(r => r.status !== 'planned' && r.status !== 'skipped' && r.public_progress !== false).map(publicWorkout) });
     }
     const s = await settings();
     const runnerKey=req.headers.get('x-fitness-runner-key');
@@ -126,7 +127,7 @@ Deno.serve(async (req: Request) => {
     }
     if (!await isOwner(req,s)) return reply({ error: 'Sign in with the owner email to access the private log.' },401);
     if (req.method === 'GET') {
-      const h=s.hosted_tp;return reply({ workouts: await records(), checkins: check(await db.from('fitness_checkins').select('date,data').order('date')), connections: { calendar: !!s.tp_calendar, intervals: !!s.intervals_key, athlete: s.intervals_athlete || '', last_sync: s.last_sync || null,hosted:h?{enabled:!!h.enabled,status:h.status,last_success_at:h.last_success_at,last_attempt_at:h.last_attempt_at,applied:h.applied,reviews:h.reviews||[]}:null } });
+      const h=s.hosted_tp;return reply({ sync: publicSync(s), workouts: await records(), checkins: check(await db.from('fitness_checkins').select('date,data').order('date')), connections: { calendar: !!s.tp_calendar, intervals: !!s.intervals_key, athlete: s.intervals_athlete || '', last_sync: s.last_sync || null,hosted:h?{enabled:!!h.enabled,status:h.status,last_success_at:h.last_success_at,last_attempt_at:h.last_attempt_at,applied:h.applied,reviews:h.reviews||[]}:null } });
     }
     if (req.method !== 'POST') return reply({ error: 'Method not allowed.' },405);
     if (Number(req.headers.get('content-length') || 0) > 2000000) return reply({ error: 'Request too large.' },413);

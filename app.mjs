@@ -1,4 +1,4 @@
-import {setupJournal,paintJournal} from './journal-view.mjs?v=weekly1';
+import {setupJournal,paintJournal} from './journal-view.mjs?v=polish1';
 setupJournal();
 const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
@@ -88,8 +88,8 @@ function render() {
 }
 async function refresh() {
  const version=++refreshVersion, token=session?.access_token;
- try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;rows=data.workouts;publicPlans=data.plans||[];checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
- catch(e){if(version!==refreshVersion || token!==session?.access_token)return;owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};$('dataStatus').textContent=session?'Sign-in could not unlock the owner log. '+e.message:'Showing saved historical totals. Live data is temporarily unavailable.';if(session)status('loginStatus',e.message,true);}
+ try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;rows=data.workouts;paintSync(data.sync);publicPlans=data.plans||[];checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
+ catch(e){if(version!==refreshVersion || token!==session?.access_token)return;owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};publicPlans=[];$('lastSynced').textContent='Sync time unavailable · offline history';$('dataStatus').textContent=session?'Sign-in could not unlock the owner log. '+e.message:'Showing saved historical totals. Live data is temporarily unavailable.';if(session)status('loginStatus',e.message,true);}
  render();
 }
 function requireOwner(action) {if(owner){action();return;} $('loginDialog').showModal();}
@@ -170,3 +170,5 @@ $('todayLog').onclick=()=>requireOwner(()=>openWorkout());$('benchmarkSport').on
 $('repeatLift').onclick=()=>requireOwner(()=>{const prior=completed(rows).filter(r=>(r.exercises||[]).length).sort((a,b)=>b.date.localeCompare(a.date))[0];if(!prior)return;openWorkout();$('workoutType').value='Strength';$('workoutTitle').value='Strength workout';$('exerciseEditor').replaceChildren();for(const e of prior.exercises)addExercise(structuredClone(e));$('workoutNotes').value='Draft repeated from '+prior.date+'. Review and record actual work.';});
 
 if((window.matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!location.hash&&!location.search)location.hash='progress';
+
+function paintSync(sync){const stamp=sync?.last_success_at,at=new Date(stamp);$('lastSynced').textContent=stamp&&Number.isFinite(at.getTime())?'TrainingPeaks synced '+at.toLocaleString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'})+(Date.now()-at.getTime()>36*3600000?' · may be out of date':''):'TrainingPeaks sync time unavailable';}
