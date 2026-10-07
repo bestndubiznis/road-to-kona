@@ -1,6 +1,6 @@
 # Hosted TrainingPeaks mirror
 
-GitHub Actions runs an isolated Chromium browser at approximately 8:05 p.m. Pacific (two UTC schedules with a DST-aware gate). Standard public-repository Linux runners are used. No downloads, cookies, screenshots, workout files, or traces are uploaded as artifacts. Actions can delay or miss scheduled runs; the independent Supabase watchdog alerts after 36 hours without a successful check.
+GitHub Actions runs an isolated Chromium browser twice daily at approximately 9:30 a.m. and 9:30 p.m. America/Los_Angeles (four UTC schedules with a DST-aware gate). Standard public-repository Linux runners are used. No downloads, cookies, screenshots, workout files, or traces are uploaded as artifacts. Actions can delay or miss scheduled runs; the independent Supabase watchdog alerts after 36 hours without a successful check.
 
 ## One-time owner setup
 
@@ -16,7 +16,7 @@ Do not send these through chat or commit them. Enable the hosted check in the pr
 
 Enable push notifications on the phone from the installed site's private log and send a test. No device was subscribed when this integration was prepared. Failure notifications link to the private connection section and deduplicate per unresolved reason and device. Expired subscriptions are removed. The server watches runner silence independently of GitHub's failure-report step. Alerts need the Supabase project and browser push service to be available; they are not an unconditional delivery guarantee.
 
-After the hosted runner's first successful import, replace the local daily TrainingPeaks mirror with a quiet monitor/fallback. Keep the evening actual-workout check-in. If a website change breaks selectors, fix `hosted/run.mjs`, dispatch again, and verify the server success timestamp before claiming restoration.
+After the hosted runner's first successful import, replace the local daily TrainingPeaks mirror with a quiet monitor/fallback. The server keeps the 8:30 p.m. Pacific phone-only reminder for unfinished prescribed strength sessions; no chat reminder fallback. If a website change breaks selectors, fix `hosted/run.mjs`, dispatch again, and verify the server success timestamp before claiming restoration.
 
 ## Server deployment
 

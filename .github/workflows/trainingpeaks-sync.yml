@@ -1,7 +1,10 @@
 name: TrainingPeaks hosted sync
 on:
   schedule:
-    - cron: '5 3,4 * * *'
+    - cron: '30 16 * * *'
+    - cron: '30 17 * * *'
+    - cron: '30 4 * * *'
+    - cron: '30 5 * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,10 +19,12 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Select 8 p.m. Pacific (DST aware)
+      - name: Select 9:30 a.m. / p.m. Pacific (DST aware)
         id: window
+        env:
+          SYNC_CRON: ${{ github.event.schedule }}
         run: |
-          node --input-type=module -e 'import fs from "node:fs"; const hour=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"2-digit",hourCycle:"h23"}).format(new Date()); fs.appendFileSync(process.env.GITHUB_OUTPUT,"run="+(process.env.GITHUB_EVENT_NAME==="workflow_dispatch"||hour==="20")+"\n");'
+          node --input-type=module -e 'import fs from "node:fs"; const noon=new Date(); noon.setUTCHours(12,0,0,0); const pacificHour=Number(new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"2-digit",hourCycle:"h23"}).format(noon)); const active=pacificHour===5?["30 16 * * *","30 4 * * *"]:["30 17 * * *","30 5 * * *"]; fs.appendFileSync(process.env.GITHUB_OUTPUT,"run="+(process.env.GITHUB_EVENT_NAME==="workflow_dispatch"||active.includes(process.env.SYNC_CRON))+"\n");'
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.window.outputs.run == 'true'
         with:
