@@ -13,7 +13,7 @@ function figure(side,groups,mode,selected){
 export function createMuscleMap({getRows,isOwner}){
  const $=id=>document.getElementById(id);let selected='quads';
  function paint(){
-  const owner=isOwner(),mode=$('muscleMode').value; if(!owner&&mode==='strength')$('muscleMode').value='endurance';
+  const owner=true,mode=$('muscleMode').value; if(!owner&&mode==='strength')$('muscleMode').value='endurance';
   $('muscleMode').querySelector('option[value="strength"]').disabled=!owner;
   const range=$('muscleRange').value,start=range==='all'?'':dateStart(range),end=localDate(),rows=getRows(),result=muscleSummary(rows,{start,end,privateDetails:owner}),groups=result.groups,currentMode=$('muscleMode').value,g=groups[selected];
   $('muscleFigures').innerHTML=figure('front',groups,currentMode,selected)+figure('back',groups,currentMode,selected);

@@ -39,8 +39,8 @@ export function strengthHistory(rows, exercise) {
   })).sort((a, b) => a.date.localeCompare(b.date));
 }
 export function publicWorkout(r) {
-  // Never spread private rows into a public response: explicitly allow these fields.
-  return { id: r.id, date: r.date, type: r.type, title: r.type === 'Race' ? r.title : r.type + ' workout', duration_hours: number(r.duration_hours), bike_miles: number(r.bike_miles), run_miles: number(r.run_miles), swim_yards: number(r.swim_yards), strength: number(r.strength), source: r.source, status: r.status || 'completed' };
+  // Public lifting metrics are allowlisted; notes, prescriptions, and recovery remain private.
+  return { id: r.id, date: r.date, type: r.type, title: r.type === 'Race' ? r.title : r.type + ' workout', duration_hours: number(r.duration_hours), bike_miles: number(r.bike_miles), run_miles: number(r.run_miles), swim_yards: number(r.swim_yards), strength: number(r.strength), exercises: (r.exercises||[]).map(e=>({name:e.name,unit:e.unit,sets:(e.sets||[]).map(s=>({...(s.seconds!=null?{seconds:s.seconds}:{reps:s.reps}),weight:s.weight,kind:s.kind}))})), source: r.source, status: r.status || 'completed' };
 }
 export function validateWorkout(r) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '') || new Date(r.date + 'T00:00:00Z').toISOString().slice(0, 10) !== r.date) throw new Error('Choose a valid date.');
