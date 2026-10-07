@@ -1,73 +1,41 @@
-# Walker Wells — Road to Kona website v6
+# Walker Wells — Fitness Log
 
-Everything already logged is preserved:
-- Notes history beginning May 18, 2026
-- TrainingPeaks completed workouts through Sep 10, 2026
-- IRONMAN 70.3 Santa Cruz on Sep 13, 2026
-- Sep 20 post-race bike file
-- COMPLETE Notes entries use the scheduled workout when the completion note does not restate every metric; explicit actual values override the plan.
+A static GitHub Pages frontend with a Supabase backend for private endurance, strength, and recovery records. The existing walkertokona.com domain continues to work; Kona fundraising and race commitments are replaced with lifelong fitness progress.
 
-## New: + Add workout
-The public website now has a `+ Add` button. After entering the admin password you can choose either `+ Workout` or `+ Donation`.
+## What is preserved
 
-Password:
-`IRONMAN2027`
+All 154 historical workouts, original notes, TrainingPeaks records, Santa Cruz 70.3 (5:29:35), and September 20 ride are preserved in the private database. Totals remain 135.2 hours, 1,133.4 bike miles, 256.1 run miles, 71,227 swim yards, and 9 sessions including strength. Reconstructed historical metrics are retained as originally documented, rather than represented as newly measured values. Earlier lifting notes are not converted into invented sets.
 
-The password unlocks a workout form inside the site.
+The public historical bundles contain only session metrics. Original details previously committed to this public repository remain accessible in Git history; this change does not erase past publication. All new private notes, sets, recovery metrics, and integration credentials stay out of the repository.
 
-To make new workouts persist for everyone who visits the website, connect the site to Supabase once.
+## Everyday use
 
-## One-time Supabase setup
-1. Create a free project at supabase.com.
-2. Open SQL Editor.
-3. Paste and run `SUPABASE_SETUP.sql`.
-4. In Supabase Project Settings / API, copy:
-   - Project URL
-   - anon/public key
-5. Open `config.js` and paste them into:
-   - `supabaseUrl`
-   - `supabaseAnonKey`
-6. Upload the site to GitHub Pages.
+- Choose **Private log** and sign in with the configured owner email.
+- Log endurance, strength, walking, hiking, mobility, and other sessions. Plans and skipped sessions are excluded from completed totals.
+- Strength records support multiple exercises with working/warm-up sets, reps, lb/kg/bodyweight, and optional set and session RPE. Progression compares loads and volume in each recorded unit. Estimated 1RM uses Epley on 1–10-rep working sets; it is an estimate, not a measured maximum.
+- Optional private daily check-ins record sleep, energy, soreness, body weight, resting HR, and HRV.
+- Each workout can opt out of public progress. The public API explicitly returns only date, sport, duration, distance, source, and strength session counts. New titles are generalized except race names.
+- If a sign-in email redirects to a different page, paste the full email link into the sign-in dialog. Configure Supabase Auth Site URL and redirect allowlist to https://walkertokona.com for normal direct sign-in.
 
-The historical workouts remain bundled in the site. New workouts are stored in Supabase and load automatically for every visitor.
+## TrainingPeaks stays central
 
-## Free hosting with GitHub Pages
-1. Create a GitHub account if needed.
-2. Create a new PUBLIC repository, e.g. `road-to-kona`.
-3. Upload the CONTENTS of this folder — not the zip itself.
-   `index.html` must be at the repository root.
-4. In the repository open Settings -> Pages.
-5. Under Build and deployment:
-   - Source: Deploy from a branch
-   - Branch: `main`
-   - Folder: `/ (root)`
-6. Save.
-7. GitHub will give you a free URL such as:
-   `https://YOURUSERNAME.github.io/road-to-kona/`
+The coach continues to prescribe workouts in TrainingPeaks. A Premium calendar feed mirrors upcoming prescriptions without moving the coaching workflow. Get the private URL from Settings → Account → Calendar; enter it inside the signed-in site. URLs are stored server-side and never returned to the browser.
 
-You can add a custom domain later. The hosting itself can stay free.
+TrainingPeaks does not currently offer personal API access. Its calendar feed includes five past days and fourteen future days, can lag up to 24 hours, and must be checked for the coach's strength workouts. If those prescriptions are absent, add them manually using **Add prescription**. Calendar events are plans, not proof of completion. Workout Summary CSV imports support historical completed data with a preview and duplicate checks. CSV metric values use actual time/distance; planned time is never substituted.
 
-## Admin security note
-This is intentionally lightweight, but the actual Supabase insert also checks the password server-side through the SQL function. There is no direct public INSERT policy on the workout table.
+Optional Intervals.icu connectivity collects completed device workouts while keeping TrainingPeaks for coaching. Connect devices there first, then add athlete ID and personal API key in this site's private connections panel. The sync reads the last 30 days and uses external IDs for idempotence. Existing matching workouts and private lifting sets are preserved. This connection is optional and is not active until credentials are supplied.
 
-## Main files
-- `index.html` public site + admin modal
-- `workouts-data.js` complete historical workout log
-- `config.js` campaign, Supabase, and admin settings
-- `SUPABASE_SETUP.sql` one-time backend setup
-- `data/workouts.json` / `data/workouts.csv` historical source data
+## Backend
 
+- `FITNESS_SETUP.sql`: private tables, RLS, and permissions. Browser roles have no table access; fitness-api verifies the owner's email with Supabase Auth `getUser` before private operations.
+- `supabase/functions/fitness-api/index.ts`: public projection, private CRUD, imports, and provider sync. JWT gateway verification is disabled because anonymous reads are allowed; function-level owner JWT validation protects every private action. A private scheduler key grants only provider synchronization.
+- `lib/fitness.mjs`: shared parsing, validation, projections, totals, and progress calculations. Keep its function copy in sync.
+- Hourly Supabase Cron runs `fitness-hourly-sync`. It reads its key from restricted server-side settings, not a public source file.
+- `fitness_followups` tracks once-per-day chat prompts. See `FITNESS_OPERATIONS.md` for conversational logging instructions.
+- Dependencies are pinned: vendored browser Supabase JS 2.117.2 and the same Edge Function version.
 
-## Fundraising admin
-After entering `IRONMAN2027`, choose `+ Donation`.
+## Validation
 
-You can enter:
-- date
-- amount
-- donor / source
-- whether the donor name should be public
-- optional note
+Run `node --test tests/fitness.test.mjs` and `node --check app.mjs`. Preview with `python3 -m http.server 8765`. Verify public API responses never contain notes, sets, RPE, recovery, or credentials; private endpoints must reject anonymous and non-owner sessions.
 
-The public fundraising progress bar updates automatically from all saved donations.
-
-`campaign.raised` in `config.js` can still be used as a starting balance if you already raised money before turning on the Supabase donation table.
+The existing campaign database tables are retained as historical records. New fitness data is stored only in the private fitness tables.
