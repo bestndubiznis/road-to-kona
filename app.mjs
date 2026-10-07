@@ -1,8 +1,8 @@
-import {createMuscleMap} from './muscle-view.mjs';
+import {createMuscleMap} from './muscle-view.mjs?v=mobile2';
 import {dateStart, progressWeeks, filterWorkouts, bestEfforts, clockTime, SANTA_CRUZ} from './lib/progress.mjs';
-import { parseWorkoutNote } from './lib/note-parser.mjs';
+import { parseWorkoutNote } from './lib/note-parser.mjs?v=mobile2';
 import { setupPush } from './push.mjs';
-import { number, localDate, completed, totals, weekly, strengthHistory, trainingPeaksCsv, validateWorkout } from './lib/fitness.mjs';
+import { number, localDate, completed, totals, weekly, strengthHistory, trainingPeaksCsv, validateWorkout } from './lib/fitness.mjs?v=mobile2';
 const $ = id => document.getElementById(id), C = window.FITNESS_CONFIG;
 const fmt = (n, d=0) => number(n).toLocaleString(undefined,{maximumFractionDigits:d});
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
