@@ -6,7 +6,7 @@ self.addEventListener('push', event => {
   try { if (event.data) payload = { ...payload, ...event.data.json() }; } catch {}
   event.waitUntil(self.registration.showNotification(payload.title, {
     body: payload.body, icon: '/icon-192.png', badge: '/icon-192.png',
-    tag: 'fitness-strength-check-in', data: { url: payload.url },
+    tag: payload.tag || 'fitness-strength-check-in', data: { url: payload.url },
     renotify: false
   }));
 });
@@ -17,7 +17,7 @@ self.addEventListener('notificationclick', event => {
     if (target.origin !== self.location.origin) return;
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const window = windows.find(w => new URL(w.url).origin === self.location.origin);
-    if (window) { await window.focus(); window.postMessage({ type: 'open-strength-log' }); }
+    if (window) { await window.focus(); if(target.searchParams.get('log')==='strength')window.postMessage({ type: 'open-strength-log' });else await window.navigate(target.href); }
     else await self.clients.openWindow(target.href);
   })());
 });

@@ -1,0 +1,44 @@
+name: TrainingPeaks hosted sync
+on:
+  schedule:
+    - cron: '5 3,4 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: trainingpeaks-hosted-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Select 8 p.m. Pacific (DST aware)
+        id: window
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const hour=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"2-digit",hourCycle:"h23"}).format(new Date()); fs.appendFileSync(process.env.GITHUB_OUTPUT,"run="+(process.env.GITHUB_EVENT_NAME==="workflow_dispatch"||hour==="20")+"\n");'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: steps.window.outputs.run == 'true'
+        with:
+          node-version: '22'
+      - name: Install pinned runner dependencies
+        if: steps.window.outputs.run == 'true'
+        run: npm ci --prefix hosted
+      - name: Install Chromium
+        if: steps.window.outputs.run == 'true'
+        run: cd hosted && npx playwright install --with-deps chromium
+      - name: Check actuals and coach plans
+        if: steps.window.outputs.run == 'true'
+        env:
+          TP_USERNAME: ${{ secrets.TP_USERNAME }}
+          TP_PASSWORD: ${{ secrets.TP_PASSWORD }}
+          FITNESS_RUNNER_KEY: ${{ secrets.FITNESS_RUNNER_KEY }}
+        run: node hosted/run.mjs
+      - name: Report infrastructure failure
+        if: failure() && steps.window.outputs.run == 'true'
+        env:
+          FITNESS_RUNNER_KEY: ${{ secrets.FITNESS_RUNNER_KEY }}
+        run: node hosted/report-failure.mjs

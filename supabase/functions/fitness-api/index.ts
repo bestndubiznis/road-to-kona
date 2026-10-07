@@ -1,8 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import { publicWorkout, validateWorkout, parseCalendar, fromIntervals, localDate } from './fitness.mjs';
-import { vapidKeys, endpointHash, validateSubscription, sendPush, sendDuePush } from './push.ts';
+import { vapidKeys, endpointHash, validateSubscription, sendPush, sendDuePush, sendSyncAlert } from './push.ts';
+import {parseTpExport,reconcileTp,syncAlert} from './tp-hosted.mjs';
 
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-fitness-sync-key', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-fitness-sync-key,x-fitness-runner-key', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}');
 const db = createClient(Deno.env.get('SUPABASE_URL')!, keys.default || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } });
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: cors });
@@ -87,6 +88,29 @@ Deno.serve(async (req: Request) => {
       return reply({ workouts: rows.filter(r => r.status !== 'planned' && r.status !== 'skipped' && r.public_progress !== false).map(publicWorkout) });
     }
     const s = await settings();
+    const runnerKey=req.headers.get('x-fitness-runner-key');
+    if(req.method==='POST'&&runnerKey){
+      if(!s.hosted_tp?.key_hash||await endpointHash(runnerKey)!==s.hosted_tp.key_hash)return reply({error:'Invalid runner key.'},401);
+      if(!s.hosted_tp.enabled)return reply({error:'Hosted sync is not enabled.'},403);
+      const text=await req.text();if(text.length>2000000)return reply({error:'Request too large.'},413);const body=JSON.parse(text),now=new Date().toISOString();
+      if(body.action==='hosted_import'){
+        const today=localDate(),shift=(days:number)=>{const d=new Date(today+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
+        const incoming=parseTpExport(String(body.csv||''),today);
+        if(incoming.length>1000||incoming.some((r:any)=>r.date<shift(-22)||r.date>shift(15)))throw new Error('Export must cover only the recent and upcoming window.');
+        const prior=check(await db.from('fitness_workouts').select('id,external_id,data').gte('data->>date',shift(-22)).lte('data->>date',shift(15)));
+        const result=await reconcileTp(incoming,prior),applied=check(await db.rpc('fitness_apply_tp_changes',{changes:result.changes}));
+        const state={...s.hosted_tp,status:result.reviews.length?'review_required':'success',checked_at:now,last_success_at:now,covered_from:shift(-21),covered_to:shift(14),applied,reviews:result.reviews,alert_deliveries:result.reviews.length?s.hosted_tp.alert_deliveries||{}:{}};
+        check(await db.from('fitness_settings').upsert([{key:'hosted_tp',value:state},{key:'trainingpeaks_browser_sync',value:{status:'success',checked_at:now,covered_from:shift(-21),covered_to:shift(14),source:'GitHub Actions',applied}}]));
+        return reply({saved:true,applied,review_count:result.reviews.length});
+      }
+      if(body.action==='hosted_report'){
+        if(!['started','needs_login','error'].includes(body.status))throw new Error('Invalid sync status.');
+        const next=body.status==='error'&&s.hosted_tp.status==='needs_login'?'needs_login':body.status==='started'?'running':body.status;
+        const state={...s.hosted_tp,status:next,last_attempt_at:now};check(await db.from('fitness_settings').upsert({key:'hosted_tp',value:state}));
+        return reply({reported:true});
+      }
+      return reply({error:'Runner only supports export import and health reporting.'},403);
+    }
     const scheduled = !!s.sync_key && req.headers.get('x-fitness-sync-key') === s.sync_key;
     // Custom auth: a scheduler key only grants background sync and due reminders; every other private action needs a verified owner JWT.
     if (req.method === 'POST' && scheduled) {
@@ -95,17 +119,24 @@ Deno.serve(async (req: Request) => {
       if (body.action === 'tick') {
         const stale = !s.last_sync?.at || Date.now()-new Date(s.last_sync.at).getTime() > 55*60000;
         const result = stale ? await sync(s) : s.last_sync;
-        return reply({ sync:result,push:await sendDuePush(db,await records(),s) });
+        return reply({ sync:result,push:await sendDuePush(db,await records(),s),sync_alert:await sendSyncAlert(db,s,syncAlert(s.hosted_tp)) });
       }
       return reply({ error: 'Scheduler only supports synchronization and due reminders.' },403);
     }
     if (!await isOwner(req,s)) return reply({ error: 'Sign in with the owner email to access the private log.' },401);
     if (req.method === 'GET') {
-      return reply({ workouts: await records(), checkins: check(await db.from('fitness_checkins').select('date,data').order('date')), connections: { calendar: !!s.tp_calendar, intervals: !!s.intervals_key, athlete: s.intervals_athlete || '', last_sync: s.last_sync || null } });
+      const h=s.hosted_tp;return reply({ workouts: await records(), checkins: check(await db.from('fitness_checkins').select('date,data').order('date')), connections: { calendar: !!s.tp_calendar, intervals: !!s.intervals_key, athlete: s.intervals_athlete || '', last_sync: s.last_sync || null,hosted:h?{enabled:!!h.enabled,status:h.status,last_success_at:h.last_success_at,last_attempt_at:h.last_attempt_at,applied:h.applied,reviews:h.reviews||[]}:null } });
     }
     if (req.method !== 'POST') return reply({ error: 'Method not allowed.' },405);
     if (Number(req.headers.get('content-length') || 0) > 2000000) return reply({ error: 'Request too large.' },413);
     const body = await req.json();
+    if(body.action==='runner_key'){
+      const key=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>b.toString(16).padStart(2,'0')).join('');
+      check(await db.from('fitness_settings').upsert({key:'hosted_tp',value:{...s.hosted_tp,key_hash:await endpointHash(key),enabled:false,status:'awaiting_setup'}}));return reply({key});
+    }
+    if(body.action==='hosted_enable'){
+      if(!s.hosted_tp?.key_hash)throw new Error('Create the runner key first.');check(await db.from('fitness_settings').upsert({key:'hosted_tp',value:{...s.hosted_tp,enabled:!!body.enabled,status:body.enabled?'pending':'disabled',started_at:new Date().toISOString()}}));return reply({saved:true});
+    }
     if (body.action === 'push_key') return reply({ publicKey:(await vapidKeys(db)).publicKey });
     if (body.action === 'subscribe') {
       const subscription = validateSubscription(body.subscription);

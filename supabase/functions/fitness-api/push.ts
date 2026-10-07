@@ -19,15 +19,27 @@ export async function vapidKeys(db: any) {
   ok(await db.from('fitness_settings').upsert({ key:'vapid',value:keys }, { onConflict:'key',ignoreDuplicates:true }));
   return ok(await db.from('fitness_settings').select('value').eq('key','vapid').single()).value;
 }
-export async function sendPush(subscription: any, keys: any, test = false) {
+export async function sendPush(subscription: any, keys: any, test = false, custom: any = null) {
   validateSubscription(subscription);
-  const request = webpush.generateRequestDetails(subscription, JSON.stringify({
+  const request = webpush.generateRequestDetails(subscription, JSON.stringify(custom || {
     title: test ? 'Your fitness reminders are ready' : 'What did you lift today?',
     body: test ? 'Tap to open your private workout log.' : 'Your strength session is ready to log. Tap to add actual sets, reps, and weight.',
     url:'/?log=strength'
   }), { vapidDetails:{subject:'https://walkertokona.com',publicKey:keys.publicKey,privateKey:keys.privateKey}, TTL:21600 });
   const response = await fetch(request.endpoint, { method:'POST',headers:request.headers,body:new Uint8Array(request.body),redirect:'error',signal:AbortSignal.timeout(10000) });
   return response.status;
+}
+export async function sendSyncAlert(db:any,settings:any,alert:any){
+ if(!alert)return {sent:0};const state=settings.hosted_tp||{},notified=state.alert_deliveries||{};
+ const subscriptions=ok(await db.from('fitness_push_subscriptions').select('*'));let sent=0;
+ if(!subscriptions.length||!settings.vapid)return {sent:0,connected:false};
+ for(const row of subscriptions){
+  if(notified[row.endpoint_hash]===alert.key)continue;
+  let code=0;try{code=await sendPush(row.subscription,settings.vapid,false,{...alert,url:'/#connections',tag:'fitness-sync-attention'});}catch{}
+  if(code>=200&&code<300){notified[row.endpoint_hash]=alert.key;sent++;}
+  if(code===404||code===410)ok(await db.from('fitness_push_subscriptions').delete().eq('endpoint_hash',row.endpoint_hash));
+ }
+ ok(await db.from('fitness_settings').upsert({key:'hosted_tp',value:{...state,alert_deliveries:notified}}));return {sent,connected:true};
 }
 export async function sendDuePush(db: any, rows: any[], settings: any, now = new Date()) {
   if (!pushWindow(now)) return { due:false,sent:0 };

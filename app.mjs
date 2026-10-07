@@ -74,10 +74,10 @@ function paintEndurance() {
 }
 function paintConnections() {
  $('calendarBadge').textContent=connections.calendar?'Connected':'Not connected';$('intervalsBadge').textContent=connections.intervals?'Connected':'Optional';$('athleteId').value=connections.athlete||'';
- const sync=connections.last_sync;$('syncStatus').textContent=sync?'Last sync: '+new Date(sync.at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific. '+(sync.calendar_error||'')+' '+(sync.activities_error||'')+(sync.calendar==='connected'?' '+sync.planned+' upcoming prescriptions; '+sync.strength_planned+' identified as strength.':''):'Connect a source to enable hourly background syncing.';
+ const h=connections.hosted;$('hostedStatus').textContent=h?((h.enabled?'Enabled':'Paused / awaiting setup')+' · '+h.status+(h.last_success_at?' · Last successful check: '+new Date(h.last_success_at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific.':' · No successful hosted check yet.')+(h.reviews?.length?' '+h.reviews.length+' activity matches need review.':'')):'Not configured.';const sync=connections.last_sync;$('syncStatus').textContent=sync?'Last sync: '+new Date(sync.at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific. '+(sync.calendar_error||'')+' '+(sync.activities_error||'')+(sync.calendar==='connected'?' '+sync.planned+' upcoming prescriptions; '+sync.strength_planned+' identified as strength.':''):'Connect a source to enable hourly background syncing.';
 }
 function render() {
- $('signIn').textContent=owner?'My private log ↗':'Private log ↗'; $('modeLabel').textContent=owner?'YOUR PRIVATE LOG':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
+ $('signIn').textContent=owner?'My private log ↗':'Private log ↗'; $('modeLabel').textContent=owner?'YOUR PRIVATE LOG':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
  document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
@@ -138,3 +138,7 @@ for(const id of ['logFrom','logTo'])$(id).onchange=()=>{$('logRange').value='cus
 for(const id of ['logSort','logStatus'])$(id).onchange=()=>{visible=15;paintLog();};
 $('showAll').onclick=()=>{visible=Infinity;paintLog();};
 $('clearFilters').onclick=()=>{active='All';visible=15;for(const id of ['search','logFrom','logTo'])$(id).value='';$('logRange').value='all';$('logSort').value='newest';$('logStatus').value='completed';paintTabs();paintLog();};
+
+$('generateRunner').onclick=()=>requireOwner(async()=>{try{const data=await api('runner_key');if(!owner)return;$('runnerKey').value=data.key;$('runnerKey').hidden=false;$('copyRunner').hidden=false;status('hostedSetupStatus','Copy this key into GitHub secret FITNESS_RUNNER_KEY. Add TP_USERNAME and TP_PASSWORD directly in GitHub, then enable the hosted check.');await refresh();}catch(e){status('hostedSetupStatus',e.message,true);}});
+$('copyRunner').onclick=async()=>{try{await navigator.clipboard.writeText($('runnerKey').value);status('hostedSetupStatus','Runner key copied. Paste it into the GitHub secret, then clear your clipboard.');}catch{status('hostedSetupStatus','Select and copy the key field yourself.',true);}};
+for(const [id,enabled] of [['enableHosted',true],['disableHosted',false]])$(id).onclick=()=>requireOwner(async()=>{try{await api('hosted_enable',{enabled});status('hostedSetupStatus',enabled?'Enabled. Run the hosted workflow once to verify your connection.':'Hosted check paused.');await refresh();}catch(e){status('hostedSetupStatus',e.message,true);}});
