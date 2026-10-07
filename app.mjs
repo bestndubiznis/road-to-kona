@@ -1,3 +1,6 @@
+import {setupJournal,paintJournal} from './journal-view.mjs';
+setupJournal();
+const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
 import {createMuscleMap} from './muscle-view.mjs?v=map3';
 import {dateStart, progressWeeks, filterWorkouts, bestEfforts, clockTime, SANTA_CRUZ} from './lib/progress.mjs';
@@ -10,15 +13,17 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 const pretty = (date, options={month:'short',day:'numeric'}) => new Date(date+'T12:00:00').toLocaleDateString('en-US',options);
 const sportIcon = type => ({Swim:'≈',Bike:'◎',Run:'↗',Strength:'↔',Race:'⚑',Walk:'↗',Hike:'△',Mobility:'↝'}[type] || '○');
 const status = (id,text,error=false) => { $(id).textContent=text; $(id).className='form-status '+(error?'error':'success'); };
-const auth = window.supabase?.createClient(C.supabaseUrl,C.publishableKey);
+const auth = !preview && window.supabase?.createClient(C.supabaseUrl,C.publishableKey);
 let session = null, owner = false, rows = window.WORKOUTS || [], checkins = [], connections = {}, active='All', visible=15, editing=null, importRows=[], refreshVersion=0, parsedNote=null, notificationPending=new URLSearchParams(location.search).get('log')==='strength';
+let publicPlans=[];
 async function api(action, body={}) {
+ if(preview){if(action!=="public")throw new Error("This design preview is read-only.");return (await fetch("/preview-data.json")).json();}
   const url=C.apiUrl+(action==='public'?'?resource=public':action==='private'?'?resource=private':'');
   const r=await fetch(url,{method:['public','private'].includes(action)?'GET':'POST',headers:{'Content-Type':'application/json',...(session?{Authorization:'Bearer '+session.access_token}:{})},...(!['public','private'].includes(action)?{body:JSON.stringify({action,...body})}:{}),signal:AbortSignal.timeout(45000)});
   const data=await r.json(); if(!r.ok) throw new Error(data.error || 'Could not load the log.'); return data;
 }
 function rangeRows() {
- const range=$('range').value, today=localDate(); if(range==='all') return rows;
+ const range=$('range').value, today=localDate(); if(range==='all') return rows.filter(r=>r.date<=today);
  const d=new Date(today+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-Number(range)+1);
  const start=range==='year'?today.slice(0,4)+'-01-01':d.toISOString().slice(0,10);
  return rows.filter(r=>r.date>=start && r.date<=today);
@@ -28,26 +33,26 @@ function paintProgress() {
  const weeks=progressWeeks(rows,$('range').value), max=Math.max(1,...weeks.map(w=>w.endurance+w.strength)); $('chartScale').textContent=fmt(max,1)+' hr';
  $('volumeChart').innerHTML=weeks.map(w=>{const total=w.endurance+w.strength; return `<div class="bar-wrap" tabindex="0" role="img" aria-label="Week of ${pretty(w.date)}: ${fmt(total,1)} hours, ${w.sessions} sessions" title="Week of ${pretty(w.date)} · ${fmt(total,1)} hr · ${w.sessions} sessions"><div class="bar-label">${total?fmt(total,1):''}</div><div class="bar-stack" style="height:${total/max*83}%"><div class="bar-part strength" style="height:${total?w.strength/total*100:0}%"></div><div class="bar-part endurance" style="height:${total?w.endurance/total*100:0}%"></div></div></div>`;}).join('');
  $('chartPeriod').textContent=$('range').selectedOptions[0].textContent.toUpperCase()+' · WEEKLY HOURS';$('volumeChart').style.setProperty('--week-count',weeks.length);$('chartStart').textContent=pretty(dateStart($('range').value,localDate(),completed(rows))); $('chartEnd').textContent=pretty(weeks.at(-1).date);
- const d=new Date(localDate()+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-29);const since=d.toISOString().slice(0,10), recent=completed(rows).filter(r=>r.date>=since && r.date<=localDate()), rt=totals(recent);
+ const recent=completed(rangeRows()),rt=totals(recent);
  $('recentStats').innerHTML=[['Sessions',rt.sessions],['Hours logged',fmt(rt.hours,1)],['Strength sessions',rt.strength]].map(([label,value])=>`<div class="recent-row"><span>${label}</span><strong>${value}</strong></div>`).join('');
- $('recentNote').textContent=recent.length?'Latest logged session: '+pretty(recent.map(r=>r.date).sort().at(-1))+'.':'No sessions logged in the last 30 days. Add a workout or connect a source to keep the record current.';
+ $('recentNote').textContent=recent.length?'Latest logged session: '+pretty(recent.map(r=>r.date).sort().at(-1))+'.':'No completed sessions in this period.';
 }
 function paintStrength() {
- const names=[...new Set(completed(rows).flatMap(r=>(r.exercises||[]).map(e=>e.name)))].sort();
+ const names=[...new Set(completed(rangeRows()).flatMap(r=>(r.exercises||[]).map(e=>e.name)))].sort();
  const selected=$('exerciseSelect').value; $('exerciseSelect').innerHTML=names.length?names.map(n=>`<option>${esc(n)}</option>`).join(''):'<option>No sets logged yet</option>';
  if(names.includes(selected)) $('exerciseSelect').value=selected; $('exerciseSelect').disabled=!names.length;
- $('strengthSummary').innerHTML=`<div class="metric-pills"><span>${totals(rows).strength} strength sessions recorded</span><span>${names.length} exercises with sets</span></div>`;
+ $('strengthSummary').innerHTML=`<div class="metric-pills"><span>${totals(rangeRows()).strength} strength sessions recorded</span><span>${names.length} exercises with sets</span></div>`;
  paintLift();
 }
 function paintLift() {
 
- const history=strengthHistory(rows,$('exerciseSelect').value);
+ const history=strengthHistory(rangeRows(),$('exerciseSelect').value);
  if(!history.length){$('strengthChart').innerHTML='<div class="empty"><span class="empty-icon">↔</span>Your earlier strength notes are preserved.<br>Log sets and reps to start tracking lift progression.</div>';return;}
  $('strengthChart').innerHTML='<table class="strength-history"><thead><tr><th>DATE</th><th>TOP LOAD</th><th>WORK VOLUME</th><th>EST. 1RM*</th></tr></thead><tbody>'+history.slice(-8).map(h=>`<tr><td>${pretty(h.date)}</td><td>${h.unit==='bodyweight'?'Bodyweight':fmt(h.best,1)+' '+h.unit}</td><td>${h.seconds?fmt(h.seconds)+' sec'+(h.volume?' + ':''):''}${h.volume||!h.seconds?fmt(h.volume)+' '+(h.unit==='bodyweight'?'':h.unit+' × reps'):''}</td><td>${h.estimatedMax?fmt(h.estimatedMax,1)+' '+h.unit:'—'}</td></tr>`).join('')+'</tbody></table>';
  $('strengthChart').title='Estimated 1RM uses Epley on working sets of 1–10 reps. It is not a measured maximum.';
 }
 function paintTabs() {
- const types=['All',...new Set(completed(rows).map(r=>r.type))]; if(totals(rows).strength && !types.includes('Strength'))types.push('Strength');
+ const types=['All',...new Set(completed(rows).map(r=>r.type))]; if(totals(rangeRows()).strength && !types.includes('Strength'))types.push('Strength');
  $('typeTabs').innerHTML=types.map(t=>`<button class="tab ${t===active?'active':''}" aria-pressed="${t===active}">${esc(t)}</button>`).join('');
  [...$('typeTabs').children].forEach(b=>b.onclick=()=>{active=b.textContent;visible=15;paintTabs();paintLog();});
 }
@@ -55,7 +60,7 @@ function workoutMeta(r) {
  return [r.duration_hours?fmt(r.duration_hours*60,1)+' min':null,r.bike_miles?fmt(r.bike_miles,1)+' mi bike':null,r.run_miles?fmt(r.run_miles,1)+' mi run / walk':null,r.swim_yards?fmt(r.swim_yards)+' yd swim':null,r.strength && r.type!=='Strength'?'+ strength':null,owner && r.rpe?'RPE '+r.rpe:null].filter(Boolean).join(' · ') || 'Duration not recorded';
 }
 function paintLog() {
- const filtered=filterWorkouts(rows,{sport:active,status:owner?$('logStatus').value:'completed',start:$('logFrom').value,end:$('logTo').value,term:$('search').value,sort:$('logSort').value,privateDetails:owner});
+ const filtered=filterWorkouts(rangeRows(),{sport:active,status:owner?$('logStatus').value:'completed',start:$('logFrom').value,end:$('logTo').value,term:$('search').value,sort:$('logSort').value,privateDetails:owner});
  $('logCount').textContent=Math.min(visible,filtered.length)+' of '+filtered.length+' matching workouts';$('showAll').hidden=filtered.length<=visible;
  $('workoutList').innerHTML=filtered.slice(0,visible).map(r=>`<article class="workout-row"><div class="workout-date"><b>${pretty(r.date)}</b>${r.date.slice(0,4)}</div><div class="sport-icon ${r.type==='Strength'?'strength':''}" aria-hidden="true">${sportIcon(r.type)}</div><div><h3>${esc(r.title)}${r.status==='planned'?' <span class="badge">'+(r.date<localDate()?'No actuals recorded':'Planned')+'</span>':r.status==='skipped'?' <span class="badge">Skipped</span>':''}</h3><div class="workout-meta">${esc(workoutMeta(r))}</div></div><div class="workout-actions"><span class="workout-source">${esc(r.source || 'Manual')}</span>${owner?`<button class="text-button edit-workout" data-id="${esc(r.id)}">Edit ↗</button>`:''}</div>${owner||(r.exercises||[]).length?`<details class="private-details"><summary>${owner?'Notes & lifting sets':'Lifting sets'}</summary><p>${owner?(esc([r.summary,r.details,r.private_notes].filter(Boolean).join('\n')) || 'No notes recorded.'):''}</p>${(r.exercises||[]).map(e=>`<strong>${esc(e.name)} · ${esc(e.unit)}</strong><table class="sets-read"><tr><th>Set</th><th>Reps / time</th><th>Load</th><th>Effort</th></tr>${e.sets.map((s,i)=>`<tr><td>${i+1}${s.kind==='warmup'?' · warm-up':''}</td><td>${s.seconds!=null?esc(s.seconds)+' sec':esc(s.reps)}</td><td>${e.unit==='bodyweight'?'BW':esc(s.weight)+' '+esc(e.unit)}</td><td>${owner?(s.rpe||'—'):'—'}</td></tr>`).join('')}</table>`).join('')}</details>`:''}</article>`).join('')||'<div class="empty">No workouts match this view.</div>';
  $('loadMore').hidden=filtered.length<=visible; document.querySelectorAll('.edit-workout').forEach(b=>b.onclick=()=>openWorkout(rows.find(r=>r.id===b.dataset.id)));
@@ -79,11 +84,11 @@ function paintConnections() {
 }
 function render() {
  $('signIn').textContent=owner?'My private log ↗':'Private log ↗'; $('modeLabel').textContent=owner?'YOUR PRIVATE LOG':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
- document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
+ document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
  const version=++refreshVersion, token=session?.access_token;
- try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;rows=data.workouts;checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
+ try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;rows=data.workouts;publicPlans=data.plans||[];checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
  catch(e){if(version!==refreshVersion || token!==session?.access_token)return;owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};$('dataStatus').textContent=session?'Sign-in could not unlock the owner log. '+e.message:'Showing saved historical totals. Live data is temporarily unavailable.';if(session)status('loginStatus',e.message,true);}
  render();
 }
@@ -116,7 +121,7 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();if(!auth)return status('log
 $('emailLogin').onclick=async()=>{if(!auth)return;const button=$('emailLogin');button.disabled=true;try{if(!$('email').checkValidity()||!$('email').value)throw new Error('Enter your email first.');const {error}=await auth.auth.signInWithOtp({email:$('email').value.trim(),options:{emailRedirectTo:C.siteUrl,shouldCreateUser:false}});if(error)throw error;status('loginStatus','Check your email. For the Home Screen app, copy the link without opening it, then paste it below.');}catch(e){status('loginStatus',/rate limit/i.test(e.message)?'Email sending limit reached. Wait about an hour, or use your password.':e.message,true);}finally{button.disabled=false;}};
 $('passwordForm').onsubmit=async e=>{e.preventDefault();if(!owner||!session)return;const button=e.submitter;button.disabled=true;try{if($('newPassword').value!==$('confirmPassword').value)throw new Error('The passwords do not match.');const {error}=await auth.auth.updateUser({password:$('newPassword').value});if(error)throw error;$('passwordForm').reset();status('passwordStatus','Password saved. Open the Home Screen app and sign in with your email and this password.');}catch(e){status('passwordStatus',e.message,true);}finally{button.disabled=false;}};
 $('useMagicLink').onclick=async()=>{try{const link=new URL($('magicLink').value), params=new URLSearchParams(link.hash.slice(1));const token=link.searchParams.get('token_hash')||link.searchParams.get('token');let result;if(params.has('access_token'))result=await auth.auth.setSession({access_token:params.get('access_token'),refresh_token:params.get('refresh_token')});else if(token)result=await auth.auth.verifyOtp({token_hash:token,type:'magiclink'});else throw new Error('Paste the complete sign-in link from your email.');if(result.error)throw result.error;session=result.data.session;$('magicLink').value='';await refresh();}catch(e){status('loginStatus',e.message,true);}};
-$('range').onchange=paintProgress;$('search').oninput=()=>{visible=15;paintLog();};$('loadMore').onclick=()=>{visible+=15;paintLog();};$('exerciseSelect').onchange=paintLift;$('enduranceSport').onchange=paintEndurance;
+$('range').onchange=()=>{try{localStorage.setItem('fitness-journal-range',$('range').value);}catch{}visible=15;render();};$('planWeek').onchange=()=>paintJournal(rows,publicPlans);$('search').oninput=()=>{visible=15;paintLog();};$('loadMore').onclick=()=>{visible+=15;paintLog();};$('exerciseSelect').onchange=paintLift;$('enduranceSport').onchange=paintEndurance;
 $('addRecovery').onclick=()=>{$('recoveryForm').reset();$('recoveryDate').value=localDate();$('recoveryStatus').textContent='';$('recoveryDialog').showModal();};
 $('recoveryForm').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const checkin={date:$('recoveryDate').value,weight_unit:$('weightUnit').value,notes:$('recoveryNotes').value};for(const [id,key]of [['sleepHours','sleep_hours'],['energy','energy'],['soreness','soreness'],['bodyWeight','weight'],['restingHr','resting_hr'],['hrv','hrv']])checkin[key]=$(id).value?Number($(id).value):null;await api('checkin',{checkin});await refresh();$('recoveryDialog').close();}catch(e){status('recoveryStatus',e.message,true);}finally{button.disabled=false;}};
 async function saveConnection(body){try{await api('connections',body);await api('sync');await refresh();$('calendarUrl').value='';$('intervalsKey').value='';}catch(e){$('syncStatus').textContent=e.message;}}
@@ -126,8 +131,9 @@ $('csvFile').onchange=async()=>{importRows=[];$('confirmImport').hidden=true;try
 $('confirmImport').onclick=async()=>{const b=$('confirmImport');b.disabled=true;try{const result=await api('import',{workouts:importRows});await refresh();$('importPreview').textContent=result.imported+' new workouts imported.';b.hidden=true;importRows=[];}catch(e){$('importPreview').textContent=e.message;}finally{b.disabled=false;}};
 for(const button of document.querySelectorAll('[data-close]'))button.onclick=()=>$(button.dataset.close).close();
 function openNotificationWorkout(){requireOwner(()=>{const plan=rows.find(r=>r.date===localDate() && r.status==='planned' && (r.type==='Strength'||r.strength>0));openWorkout(plan?{...plan,status:'completed'}:null,'Strength');});}
-const push=setupPush({api,requireOwner,openLog:()=>{notificationPending=true;if(owner){notificationPending=false;openNotificationWorkout();}else $('loginDialog').showModal();}});
-const muscleMap=createMuscleMap({getRows:()=>rows,isOwner:()=>owner});
+const push=preview?{refresh(){}}:setupPush({api,requireOwner,openLog:()=>{notificationPending=true;if(owner){notificationPending=false;openNotificationWorkout();}else $('loginDialog').showModal();}});
+const muscleMap=createMuscleMap({getRows:()=>rangeRows(),isOwner:()=>owner,getPeriodLabel:()=>$('range').selectedOptions[0].textContent});
+if(preview){document.body.insertAdjacentHTML('afterbegin','<div class="preview-banner">DESIGN PREVIEW · local branch · data snapshot · saving and sign-in disabled</div>');$('signIn').disabled=true;for(const id of ['addHero','addStrength','addWorkout','mobileLog','emailLogin','useMagicLink'])$(id).disabled=true;}
 render();
 if(auth){const result=await auth.auth.getSession();session=result.data.session;auth.auth.onAuthStateChange((_event,newSession)=>{session=newSession;if(!session){owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};render();}setTimeout(()=>refresh(),0);});}
 await refresh();
@@ -163,4 +169,4 @@ function paintBenchmarks(){const sport=$('benchmarkSport').value,b=enduranceComp
 $('todayLog').onclick=()=>requireOwner(()=>openWorkout());$('reviewWeek').onchange=paintReview;$('benchmarkSport').onchange=paintBenchmarks;
 $('repeatLift').onclick=()=>requireOwner(()=>{const prior=completed(rows).filter(r=>(r.exercises||[]).length).sort((a,b)=>b.date.localeCompare(a.date))[0];if(!prior)return;openWorkout();$('workoutType').value='Strength';$('workoutTitle').value='Strength workout';$('exerciseEditor').replaceChildren();for(const e of prior.exercises)addExercise(structuredClone(e));$('workoutNotes').value='Draft repeated from '+prior.date+'. Review and record actual work.';});
 
-if((window.matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!location.hash&&!location.search)location.hash='today';
+if((window.matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!location.hash&&!location.search)location.hash='progress';

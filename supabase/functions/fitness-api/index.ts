@@ -1,3 +1,4 @@
+import { publicPlans } from './public-plans.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import { publicWorkout, validateWorkout, parseCalendar, fromIntervals, localDate } from './fitness.mjs';
 import { vapidKeys, endpointHash, validateSubscription, sendPush, sendDuePush, sendSyncAlert } from './push.ts';
@@ -85,7 +86,7 @@ Deno.serve(async (req: Request) => {
     const url = new URL(req.url);
     if (req.method === 'GET' && (!url.searchParams.get('resource') || url.searchParams.get('resource') === 'public')) {
       const rows = await records();
-      return reply({ workouts: rows.filter(r => r.status !== 'planned' && r.status !== 'skipped' && r.public_progress !== false).map(publicWorkout) });
+      return reply({ plans: publicPlans(rows, localDate()), workouts: rows.filter(r => r.status !== 'planned' && r.status !== 'skipped' && r.public_progress !== false).map(publicWorkout) });
     }
     const s = await settings();
     const runnerKey=req.headers.get('x-fitness-runner-key');
