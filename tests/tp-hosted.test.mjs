@@ -6,12 +6,16 @@ test('hosted export distinguishes prescriptions from actuals; no invented liftin
 });
 test('matching source actual refresh preserves user notes, sets and visibility',async()=>{
  const row=parseTpExport(csv,'2026-10-06')[1],old={id:'x',external_id:'history:153',data:{...row,source:'TrainingPeaks browser export',private_notes:'My own note',exercises:[{name:'Squat',sets:[{reps:5}]}],public_progress:false}};
- const {changes}=await reconcileTp([{...row,duration_hours:.6}],[old]);assert.equal(changes[0].external_id,'history:153');assert.equal(changes[0].data.private_notes,'My own note');assert.equal(changes[0].data.public_progress,false);assert.equal(changes[0].data.exercises.length,1);
+ const {changes}=await reconcileTp([{...row,duration_hours:.6,trainingpeaks_export:{...row.trainingpeaks_export,CoachComments:'Updated coach plan'}}],[old]);assert.equal(changes[0].external_id,'history:153');assert.equal(changes[0].data.private_notes,'My own note');assert.equal(changes[0].data.public_progress,false);assert.equal(changes[0].data.exercises.length,1);
 });
 test('known alternate recordings and ambiguous matches never double totals',async()=>{
  const row=parseTpExport(csv,'2026-10-06')[1];let r=await reconcileTp([row],[{id:'x',data:{date:row.date,type:row.type,status:'completed',duplicate_source_records:[row.trainingpeaks_export]}}]);assert.equal(r.changes.length,0);
  r=await reconcileTp([row,row],[]);assert.equal(r.changes.length,0);assert.equal(r.reviews.length,1);
  r=await reconcileTp([row],[{id:'x',data:{date:row.date,type:'Run',duration_hours:.5,status:'completed',source:'Manual'}}]);assert.equal(r.changes.length,0);assert.equal(r.reviews.length,1);
+});
+test('manual actuals stay intact when a previously prescribed source is re-exported',async()=>{
+ const row=parseTpExport(csv,'2026-10-06')[1],old={id:'x',external_id:'source',data:{...row,manual_actuals:true,duration_hours:1,source:'TrainingPeaks hosted export'}};
+ const result=await reconcileTp([{...row,duration_hours:.8}],[old]);assert.equal(result.changes.length,0);
 });
 test('cloud alerts cover login errors and runner silence, with setup grace',()=>{
  const now=new Date('2026-10-07T20:00:00Z');assert.equal(syncAlert({enabled:false,status:'error'},now),null);assert.equal(syncAlert({enabled:true,started_at:now.toISOString()},now),null);

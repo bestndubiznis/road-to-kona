@@ -155,7 +155,7 @@ Deno.serve(async (req: Request) => {
     }
     if (body.action === 'save') {
       const row = validateWorkout(body.workout); const id = row.id; delete row.id; delete row.external_id;
-      row.title = String(row.title || row.type+' workout').slice(0,300);
+      row.title = String(row.title || row.type+' workout').slice(0,300);row.manual_actuals=row.status==='completed';
       if (id) check(await db.from('fitness_workouts').update({ data: row, updated_at: new Date().toISOString() }).eq('id',id));
       else check(await db.from('fitness_workouts').insert({ data: row }));
       return reply({ saved: true });
