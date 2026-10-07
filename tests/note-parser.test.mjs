@@ -6,3 +6,11 @@ test('missing units and loads are flagged, never guessed',()=>{const r=parseWork
 test('dumbbell per-hand basis is preserved; unspecified basis is flagged',()=>{const r=parseWorkoutNote('Dumbbell bench press 3 x 8 at 45 lb each. Dumbbell rows 3 x 10 at 40 lb.');assert.match(r.exercises[0].name,/per hand/);assert.match(r.exercises[1].name,/unspecified/);assert.ok(r.issues.some(i=>i.includes('per hand or total')));});
 test('cardio and subjective notes do not become invented lifting sets',()=>{const r=parseWorkoutNote('I ran 3 miles in 30 minutes. Legs felt sore. I slept six hours.');assert.equal(r.exercises.length,0);assert.ok(r.unparsed.length);});
 test('explicit overall weight unit can apply to all exercises',()=>{const r=parseWorkoutNote('All weights in pounds. Squats 3 x 5 at 135. Bench 3 x 8 at 95.');assert.equal(r.exercises[0].unit,'lb');assert.equal(r.exercises[1].unit,'lb');});
+
+test('sets before exercise names, per-side work, and last-set variation',()=>{
+ const r=parseWorkoutNote('Body weight pistol squats to the bench 10 each leg 3 sets, 3 sets of bent over rows 10 at 40lb dumbbells, 3 sets of 10 bird dogs each sides. 3 sets of half kneeling shoulder press 8 reps each side 27.5 lbs and then going up to 10 reps on last set, weighted single leg bench lateral step ups with 27.5 lbs dumbbell 3 sets of 10');
+ assert.equal(r.exercises.length,5);assert.equal(r.exercises[0].unit,'bodyweight');assert.equal(r.exercises[1].sets[0].weight,40);assert.match(r.exercises[2].name,/per side/);assert.deepEqual(r.exercises[3].sets.map(s=>s.reps),[8,8,10]);assert.equal(r.exercises[4].sets[0].weight,27.5);assert.ok(r.issues.some(i=>i.includes('per hand or total')));
+});
+test('timed holds and omitted reps are preserved without invented rep sets',()=>{
+ const note='bodyweight single leg iso glute bridges 30 seconds each side 3 sets, weighted ab crunches pull down with rope at 50 lbs 3 sets';const r=parseWorkoutNote(note);assert.equal(r.exercises.length,0);assert.equal(r.unparsed.length,2);assert.ok(r.issues.some(i=>i.includes('Timed hold')));assert.ok(r.issues.some(i=>i.includes('Reps missing')));assert.equal(r.original,note);
+});
