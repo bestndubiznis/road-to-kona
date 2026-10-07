@@ -31,6 +31,11 @@ try{
  // No credentials, workout payloads, browser traces, screenshots, or downloaded exports in CI logs/artifacts.
  console.log(`Hosted check complete: ${result.applied} changes; ${result.review_count} items need review.`);
 }catch{
+ if(stage==='login'&&browser)try{
+  const page=browser.contexts()[0]?.pages()[0];
+  const controls=await page.evaluate(()=>({inputs:[...document.querySelectorAll('input')].filter(e=>e.offsetWidth||e.offsetHeight).map(e=>({type:e.type,id:e.id,name:e.name,placeholder:e.getAttribute('placeholder'),label:e.getAttribute('aria-label')})),buttons:[...document.querySelectorAll('button,input[type="submit"]')].filter(e=>e.offsetWidth||e.offsetHeight).map(e=>e.tagName==='INPUT'?'submit':e.textContent.trim().slice(0,80)),headings:[...document.querySelectorAll('h1,h2')].map(e=>e.textContent.trim().slice(0,80))}));
+  const u=new URL(page.url());console.log('Sign-in controls: '+JSON.stringify({origin:u.origin,path:u.pathname,...controls}));
+ }catch{}
  if(token)try{await report({action:'hosted_report',status:stage==='login'?'needs_login':'error'});}catch{}
  console.error(stage==='login'?'TrainingPeaks sign-in needs attention.':'Hosted sync failed; review the private connection status.');process.exitCode=1;
 }finally{await browser?.close();}
