@@ -1,7 +1,9 @@
+import {createPhoneApp} from './phone-app.mjs?v=phone1';
 import {createMobility} from './mobility-view.mjs?v=mobility1';
 import {setupJournal,paintJournal} from './journal-view.mjs?v=polish1';
 setupJournal();
 const mobility=createMobility();
+const phoneApp=createPhoneApp({onRefresh:()=>refresh()});
 let liveWorkoutsLoaded=false;
 const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
@@ -87,7 +89,7 @@ function paintConnections() {
 }
 function render() {
  $('signIn').textContent=session?'Sign out':'Sign in'; $('modeLabel').textContent=session?'SIGNED IN':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
- document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans);mobility.paint(rows,liveWorkoutsLoaded);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
+ document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans);mobility.paint(rows,liveWorkoutsLoaded);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();phoneApp.paint(rows,owner,liveWorkoutsLoaded);if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
  const version=++refreshVersion, token=session?.access_token;
@@ -156,7 +158,7 @@ $('generateRunner').onclick=()=>requireOwner(async()=>{try{const data=await api(
 $('copyRunner').onclick=async()=>{try{await navigator.clipboard.writeText($('runnerKey').value);status('hostedSetupStatus','Runner key copied. Paste it into the GitHub secret, then clear your clipboard.');}catch{status('hostedSetupStatus','Select and copy the key field yourself.',true);}};
 for(const [id,enabled] of [['enableHosted',true],['disableHosted',false]])$(id).onclick=()=>requireOwner(async()=>{try{await api('hosted_enable',{enabled});status('hostedSetupStatus',enabled?'Enabled. Run the hosted workflow once to verify your connection.':'Hosted check paused.');await refresh();}catch(e){status('hostedSetupStatus',e.message,true);}});
 
-$('mobileLog').onclick=()=>requireOwner(()=>openWorkout());
+$('mobileLog').onclick=()=>requireOwner(()=>openWorkout(null,'Strength'));
 
 function paintToday(){
  const today=localDate();$('todayDate').textContent=pretty(today,{weekday:'long',month:'long',day:'numeric'});
@@ -173,6 +175,6 @@ function paintBenchmarks(){const sport=$('benchmarkSport').value,b=enduranceComp
 $('todayLog').onclick=()=>requireOwner(()=>openWorkout());$('benchmarkSport').onchange=paintBenchmarks;
 $('repeatLift').onclick=()=>requireOwner(()=>{const prior=completed(rows).filter(r=>(r.exercises||[]).length).sort((a,b)=>b.date.localeCompare(a.date))[0];if(!prior)return;openWorkout();$('workoutType').value='Strength';$('workoutTitle').value='Strength workout';$('exerciseEditor').replaceChildren();for(const e of prior.exercises)addExercise(structuredClone(e));$('workoutNotes').value='Draft repeated from '+prior.date+'. Review and record actual work.';});
 
-if((window.matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!location.hash&&!location.search)location.hash='progress';
+
 
 function paintSync(sync){const stamp=sync?.last_success_at,at=new Date(stamp);$('lastSynced').textContent=stamp&&Number.isFinite(at.getTime())?'TrainingPeaks synced '+at.toLocaleString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'})+(Date.now()-at.getTime()>36*3600000?' · may be out of date':''):'TrainingPeaks sync time unavailable';}
