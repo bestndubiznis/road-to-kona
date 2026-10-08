@@ -1,4 +1,4 @@
-import {createJourneyAnimation} from './journey-animation.mjs';
+import {createJourneyAnimation} from './journey-animation.mjs?v=journey2';
 const paintJourney=createJourneyAnimation();
 import {icon} from './lib/icons.mjs';
 import {journalData,weekDays} from './lib/journal.mjs';

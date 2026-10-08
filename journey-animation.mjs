@@ -8,7 +8,7 @@ export function createJourneyAnimation(){
   const next=JSON.stringify([j.start,j.end,label,ready,j.days.map(d=>d.cumulative)]);
   if(next===key)return;key=next;cancelAnimationFrame(frame);
   const total=document.getElementById('journeyTotal'),curve=document.getElementById('journeyCurve');
-  total.setAttribute('aria-label',j.hours.toFixed(1)+' hours logged, '+label);
+  total.setAttribute('aria-label',ready?j.hours.toFixed(1)+' hours logged, '+label:'Loading training hours');
   total.innerHTML='<strong aria-hidden="true"></strong><span aria-hidden="true"></span>';
   const number=total.querySelector('strong');total.querySelector('span').textContent='hours logged · '+label;
   const points=[[12,145],...j.days.map((d,i)=>[12+(i+1)/Math.max(1,j.days.length)*476,145-d.cumulative/Math.max(1,j.hours)*125])];
@@ -22,8 +22,9 @@ export function createJourneyAnimation(){
    const hours=p===1?j.hours:Math.max(0,(145-y)/125*Math.max(1,j.hours));
    number.textContent=hours.toFixed(1);clip.setAttribute('width',p===1?'500':String(x));dot.setAttribute('cx',x);dot.setAttribute('cy',y);
   }
-  finish=()=>draw(1);
-  if(!ready||motion.matches||j.hours===0||points.length<2){finish();return;}
+  finish=()=>draw(ready?1:0);
+  if(!ready){draw(0);return;}
+  if(motion.matches||j.hours===0||points.length<2){finish();return;}
   draw(0);const started=performance.now(),duration=1800;
   function tick(now){const t=Math.min(1,(now-started)/duration);draw(1-Math.pow(1-t,3));if(t<1)frame=requestAnimationFrame(tick);}
   frame=requestAnimationFrame(tick);

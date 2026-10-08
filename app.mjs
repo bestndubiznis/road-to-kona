@@ -2,11 +2,11 @@ import {createSyncControls} from './sync-controls.mjs?v=sync2';
 import {sportIcon,icon} from './lib/icons.mjs';
 import {createPhoneApp} from './phone-app.mjs?v=icons1';
 import {createMobility} from './mobility-view.mjs?v=recovery2';
-import {setupJournal,paintJournal} from './journal-view.mjs?v=journey1';
+import {setupJournal,paintJournal} from './journal-view.mjs?v=journey2';
 setupJournal();
 const mobility=createMobility({onSave:async body=>{if(!owner)throw new Error('Sign in to log mobility.');await api('mobility_complete',body);await refresh();}});
 const phoneApp=createPhoneApp({onRefresh:()=>refresh()});
-let liveWorkoutsLoaded=false;
+let liveWorkoutsLoaded=false,initialLoadComplete=false;
 const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
 import {createMuscleMap} from './muscle-view.mjs?v=map3';
@@ -91,13 +91,13 @@ function paintConnections() {
 }
 function render() {
  syncControls.paint(connections.dispatch);$('signIn').textContent=session?'Sign out':'Sign in'; $('modeLabel').textContent=session?'SIGNED IN':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
- document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans,liveWorkoutsLoaded);mobility.paint(rows,liveWorkoutsLoaded,owner);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();phoneApp.paint(rows,owner,liveWorkoutsLoaded);if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
+ document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans,initialLoadComplete);mobility.paint(rows,liveWorkoutsLoaded,owner);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();phoneApp.paint(rows,owner,liveWorkoutsLoaded);if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
  const version=++refreshVersion, token=session?.access_token;
  try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;liveWorkoutsLoaded=true;rows=data.workouts;paintSync(data.sync);publicPlans=data.plans||[];checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
  catch(e){if(version!==refreshVersion || token!==session?.access_token)return;liveWorkoutsLoaded=false;owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};publicPlans=[];$('lastSynced').textContent='Sync time unavailable · offline history';$('dataStatus').textContent=session?'Sign-in could not unlock the owner log. '+e.message:'Showing saved historical totals. Live data is temporarily unavailable.';if(session)status('loginStatus',e.message,true);}
- render();
+ initialLoadComplete=true;render();
 }
 function requireOwner(action) {if(owner){action();return;} $('loginDialog').showModal();}
 function openWorkout(row=null,type=null,planned=false) {
@@ -130,7 +130,7 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();if(!auth)return status('log
 $('emailLogin').onclick=async()=>{if(!auth)return;const button=$('emailLogin');button.disabled=true;try{if(!$('email').checkValidity()||!$('email').value)throw new Error('Enter your email first.');const {error}=await auth.auth.signInWithOtp({email:$('email').value.trim(),options:{emailRedirectTo:C.siteUrl,shouldCreateUser:false}});if(error)throw error;status('loginStatus','Check your email. For the Home Screen app, copy the link without opening it, then paste it below.');}catch(e){status('loginStatus',/rate limit/i.test(e.message)?'Email sending limit reached. Wait about an hour, or use your password.':e.message,true);}finally{button.disabled=false;}};
 $('passwordForm').onsubmit=async e=>{e.preventDefault();if(!owner||!session)return;const button=e.submitter;button.disabled=true;try{if($('newPassword').value!==$('confirmPassword').value)throw new Error('The passwords do not match.');const {error}=await auth.auth.updateUser({password:$('newPassword').value});if(error)throw error;$('passwordForm').reset();status('passwordStatus','Password saved. Open the Home Screen app and sign in with your email and this password.');}catch(e){status('passwordStatus',e.message,true);}finally{button.disabled=false;}};
 $('useMagicLink').onclick=async()=>{try{const link=new URL($('magicLink').value), params=new URLSearchParams(link.hash.slice(1));const token=link.searchParams.get('token_hash')||link.searchParams.get('token');let result;if(params.has('access_token'))result=await auth.auth.setSession({access_token:params.get('access_token'),refresh_token:params.get('refresh_token')});else if(token)result=await auth.auth.verifyOtp({token_hash:token,type:'magiclink'});else throw new Error('Paste the complete sign-in link from your email.');if(result.error)throw result.error;session=result.data.session;$('magicLink').value='';await refresh();}catch(e){status('loginStatus',e.message,true);}};
-$('range').onchange=()=>{try{localStorage.setItem('fitness-journal-range',$('range').value);}catch{}visible=15;render();};$('planWeek').onchange=()=>{paintJournal(rows,publicPlans,liveWorkoutsLoaded);paintReview();};$('search').oninput=()=>{visible=15;paintLog();};$('loadMore').onclick=()=>{visible+=15;paintLog();};$('exerciseSelect').onchange=paintLift;$('enduranceSport').onchange=paintEndurance;
+$('range').onchange=()=>{try{localStorage.setItem('fitness-journal-range',$('range').value);}catch{}visible=15;render();};$('planWeek').onchange=()=>{paintJournal(rows,publicPlans,initialLoadComplete);paintReview();};$('search').oninput=()=>{visible=15;paintLog();};$('loadMore').onclick=()=>{visible+=15;paintLog();};$('exerciseSelect').onchange=paintLift;$('enduranceSport').onchange=paintEndurance;
 $('addRecovery').onclick=()=>{$('recoveryForm').reset();$('recoveryDate').value=localDate();$('recoveryStatus').textContent='';$('recoveryDialog').showModal();};
 $('recoveryForm').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const checkin={date:$('recoveryDate').value,weight_unit:$('weightUnit').value,notes:$('recoveryNotes').value};for(const [id,key]of [['sleepHours','sleep_hours'],['energy','energy'],['soreness','soreness'],['bodyWeight','weight'],['restingHr','resting_hr'],['hrv','hrv']])checkin[key]=$(id).value?Number($(id).value):null;await api('checkin',{checkin});await refresh();$('recoveryDialog').close();}catch(e){status('recoveryStatus',e.message,true);}finally{button.disabled=false;}};
 async function saveConnection(body){try{await api('connections',body);await api('sync');await refresh();$('calendarUrl').value='';}catch(e){$('syncStatus').textContent=e.message;}}
