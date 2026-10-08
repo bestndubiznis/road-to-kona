@@ -1,5 +1,8 @@
+import {createMobility} from './mobility-view.mjs?v=mobility1';
 import {setupJournal,paintJournal} from './journal-view.mjs?v=polish1';
 setupJournal();
+const mobility=createMobility();
+let liveWorkoutsLoaded=false;
 const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
 import {createMuscleMap} from './muscle-view.mjs?v=map3';
@@ -84,12 +87,12 @@ function paintConnections() {
 }
 function render() {
  $('signIn').textContent=session?'Sign out':'Sign in'; $('modeLabel').textContent=session?'SIGNED IN':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
- document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
+ document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans);mobility.paint(rows,liveWorkoutsLoaded);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
  const version=++refreshVersion, token=session?.access_token;
- try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;rows=data.workouts;paintSync(data.sync);publicPlans=data.plans||[];checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
- catch(e){if(version!==refreshVersion || token!==session?.access_token)return;owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};publicPlans=[];$('lastSynced').textContent='Sync time unavailable · offline history';$('dataStatus').textContent=session?'Sign-in could not unlock the owner log. '+e.message:'Showing saved historical totals. Live data is temporarily unavailable.';if(session)status('loginStatus',e.message,true);}
+ try {const data=await api(session?'private':'public');if(version!==refreshVersion || token!==session?.access_token)return;owner=!!session;liveWorkoutsLoaded=true;rows=data.workouts;paintSync(data.sync);publicPlans=data.plans||[];checkins=data.checkins||[];connections=data.connections||{};$('dataStatus').textContent=completed(rows).length+' completed sessions · '+(owner?'Private details visible only to you.':'Lifting sets are public. Notes stay private.');if(owner)$('loginDialog').close();}
+ catch(e){if(version!==refreshVersion || token!==session?.access_token)return;liveWorkoutsLoaded=false;owner=false;rows=window.WORKOUTS||[];checkins=[];connections={};publicPlans=[];$('lastSynced').textContent='Sync time unavailable · offline history';$('dataStatus').textContent=session?'Sign-in could not unlock the owner log. '+e.message:'Showing saved historical totals. Live data is temporarily unavailable.';if(session)status('loginStatus',e.message,true);}
  render();
 }
 function requireOwner(action) {if(owner){action();return;} $('loginDialog').showModal();}
