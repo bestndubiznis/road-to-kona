@@ -42,3 +42,5 @@ section{scroll-margin-top:105px}
 .ui-icon{width:20px;height:20px;display:inline-block;vertical-align:middle;flex-shrink:0}.sport-icon .ui-icon{width:25px;height:25px}.week-session small .ui-icon{width:13px;height:13px}.close .ui-icon{width:22px;height:22px}
 
 #manualSync{margin:12px 0 24px}#manualSync .fine{max-width:640px;margin:10px 0}#dispatchSetup{margin-bottom:20px}#dispatchSetup summary{cursor:pointer;font-weight:600}
+
+.mobility-done{border-color:#66876c;background:#f3f7f2}.mobility-card .mobility-complete{margin-top:12px;min-height:44px}.mobility-card .mobility-seconds{max-width:150px;min-height:44px}

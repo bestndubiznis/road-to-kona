@@ -1,3 +1,4 @@
+import {saveMobility} from './mobility-log.mjs';
 import { dispatchSync, dispatchView, dispatchAlert } from './dispatch.mjs';
 import { publicSync } from './public-sync.mjs';
 import { publicPlans } from './public-plans.mjs';
@@ -22,7 +23,8 @@ async function records() {
   // Range pagination avoids silently truncating a lifetime log at 1,000 rows.
   for (let from = 0; ; from += 1000) {
     const page = check(await db.from('fitness_workouts').select('*').order('id').range(from, from + 999));
-    rows.push(...page.map((r: any) => ({ ...r.data, id: r.id, external_id: r.external_id })));
+    // Keep fully undone daily mobility records for safe retries, but out of all views and skipped-plan counts.
+    rows.push(...page.filter((r:any)=>!(r.external_id?.startsWith('mobility-day:') && !(r.data.mobility_stretches||[]).length)).map((r: any) => ({ ...r.data, id: r.id, external_id: r.external_id })));
     if (page.length < 1000) return rows;
   }
 }
@@ -142,6 +144,7 @@ Deno.serve(async (req: Request) => {
     if (req.method !== 'POST') return reply({ error: 'Method not allowed.' },405);
     if (Number(req.headers.get('content-length') || 0) > 2000000) return reply({ error: 'Request too large.' },413);
     const body = await req.json();
+    if(body.action==='mobility_complete')return reply(await saveMobility(db,body));
     if(body.action==='hosted_sync_now')return reply(await requestHosted(s,true));
     if(body.action==='runner_key'){
       const key=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>b.toString(16).padStart(2,'0')).join('');
