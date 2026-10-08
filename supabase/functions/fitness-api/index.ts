@@ -1,3 +1,4 @@
+import { dispatchSync, dispatchView, dispatchAlert } from './dispatch.mjs';
 import { publicSync } from './public-sync.mjs';
 import { publicPlans } from './public-plans.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
@@ -11,6 +12,11 @@ const db = createClient(Deno.env.get('SUPABASE_URL')!, keys.default || Deno.env.
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: cors });
 const check = (r: any) => { if (r.error) throw new Error(r.error.message); return r.data; };
 async function settings() { return Object.fromEntries((check(await db.from('fitness_settings').select('*')) || []).map((r: any) => [r.key, r.value])); }
+const dispatchToken = () => Deno.env.get('GITHUB_SYNC_TOKEN') || '';
+async function requestHosted(s:any,manual=false) {
+  const cas = async (before:any,after:any) => check(await db.from('fitness_settings').update({value:after}).eq('key','hosted_dispatch').eq('value',JSON.stringify(before)).select('key')).length > 0;
+  return dispatchSync({hosted:s.hosted_tp,state:s.hosted_dispatch||{},token:dispatchToken(),manual,claim:cas,finish:cas});
+}
 async function records() {
   const rows: any[] = [];
   // Range pagination avoids silently truncating a lifetime log at 1,000 rows.
@@ -121,17 +127,22 @@ Deno.serve(async (req: Request) => {
       if (body.action === 'tick') {
         const stale = !s.last_sync?.at || Date.now()-new Date(s.last_sync.at).getTime() > 55*60000;
         const result = stale ? await sync(s) : s.last_sync;
-        return reply({ sync:result,push:await sendDuePush(db,await records(),s),sync_alert:await sendSyncAlert(db,s,syncAlert(s.hosted_tp)) });
+        // Keep notification delivery independent of a failed dispatch request.
+        const push=await sendDuePush(db,await records(),s);
+        let dispatch;try{dispatch=await requestHosted(s);}catch{dispatch={status:'dispatch_error'};}
+        const fresh=await settings();
+        return reply({sync:result,push,dispatch,sync_alert:await sendSyncAlert(db,fresh,syncAlert(fresh.hosted_tp)||dispatchAlert(fresh.hosted_tp,fresh.hosted_dispatch,!!dispatchToken()))});
       }
       return reply({ error: 'Scheduler only supports synchronization and due reminders.' },403);
     }
     if (!await isOwner(req,s)) return reply({ error: 'Sign in with the owner email to access the private log.' },401);
     if (req.method === 'GET') {
-      const h=s.hosted_tp;return reply({ sync: publicSync(s), workouts: await records(), checkins: check(await db.from('fitness_checkins').select('date,data').order('date')), connections: { calendar: !!s.tp_calendar, intervals: !!s.intervals_key, athlete: s.intervals_athlete || '', last_sync: s.last_sync || null,hosted:h?{enabled:!!h.enabled,status:h.status,last_success_at:h.last_success_at,last_attempt_at:h.last_attempt_at,applied:h.applied,reviews:h.reviews||[]}:null } });
+      const h=s.hosted_tp;return reply({ sync: publicSync(s), workouts: await records(), checkins: check(await db.from('fitness_checkins').select('date,data').order('date')), connections: { dispatch:dispatchView(s.hosted_tp,s.hosted_dispatch,!!dispatchToken()), calendar: !!s.tp_calendar, intervals: !!s.intervals_key, athlete: s.intervals_athlete || '', last_sync: s.last_sync || null,hosted:h?{enabled:!!h.enabled,status:h.status,last_success_at:h.last_success_at,last_attempt_at:h.last_attempt_at,applied:h.applied,reviews:h.reviews||[]}:null } });
     }
     if (req.method !== 'POST') return reply({ error: 'Method not allowed.' },405);
     if (Number(req.headers.get('content-length') || 0) > 2000000) return reply({ error: 'Request too large.' },413);
     const body = await req.json();
+    if(body.action==='hosted_sync_now')return reply(await requestHosted(s,true));
     if(body.action==='runner_key'){
       const key=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>b.toString(16).padStart(2,'0')).join('');
       check(await db.from('fitness_settings').upsert({key:'hosted_tp',value:{...s.hosted_tp,key_hash:await endpointHash(key),enabled:false,status:'awaiting_setup'}}));return reply({key});

@@ -1,3 +1,4 @@
+import {createSyncControls} from './sync-controls.mjs?v=sync2';
 import {sportIcon,icon} from './lib/icons.mjs';
 import {createPhoneApp} from './phone-app.mjs?v=icons1';
 import {createMobility} from './mobility-view.mjs?v=icons1';
@@ -27,6 +28,7 @@ async function api(action, body={}) {
   const r=await fetch(url,{method:['public','private'].includes(action)?'GET':'POST',headers:{'Content-Type':'application/json',...(session?{Authorization:'Bearer '+session.access_token}:{})},...(!['public','private'].includes(action)?{body:JSON.stringify({action,...body})}:{}),signal:AbortSignal.timeout(45000)});
   const data=await r.json(); if(!r.ok) throw new Error(data.error || 'Could not load the log.'); return data;
 }
+const syncControls=createSyncControls({api,refresh,owner:()=>owner});
 function rangeRows() {
  const range=$('range').value, today=localDate(); if(range==='all') return rows.filter(r=>r.date<=today);
  const d=new Date(today+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-Number(range)+1);
@@ -88,7 +90,7 @@ function paintConnections() {
  const h=connections.hosted;$('hostedStatus').textContent=h?((h.enabled?'Enabled':'Paused / awaiting setup')+' · '+h.status+(h.last_success_at?' · Last successful check: '+new Date(h.last_success_at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific.':' · No successful hosted check yet.')+(h.reviews?.length?' '+h.reviews.length+' activity matches need review.':'')):'Not configured.';const sync=connections.last_sync;$('syncStatus').textContent=sync?'Last sync: '+new Date(sync.at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific. '+(sync.calendar_error||'')+' '+(sync.activities_error||'')+(sync.calendar==='connected'?' '+sync.planned+' upcoming prescriptions; '+sync.strength_planned+' identified as strength.':''):'Connect a source to enable hourly background syncing.';
 }
 function render() {
- $('signIn').textContent=session?'Sign out':'Sign in'; $('modeLabel').textContent=session?'SIGNED IN':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
+ syncControls.paint(connections.dispatch);$('signIn').textContent=session?'Sign out':'Sign in'; $('modeLabel').textContent=session?'SIGNED IN':'PUBLIC PROGRESS';$('ownerBadge').hidden=!owner;if(!owner){$('runnerKey').value='';$('runnerKey').hidden=true;$('copyRunner').hidden=true;}$('signOut').hidden=!session;if(notificationPending&&!session&&!$('loginDialog').open)$('loginDialog').showModal();
  document.querySelectorAll('.private-section').forEach(el=>el.hidden=!owner);paintJournal(rows,publicPlans);mobility.paint(rows,liveWorkoutsLoaded);paintToday();paintReview();if(owner)paintBenchmarks();paintProgress();paintBest();muscleMap.paint();paintStrength();paintTabs();paintLog();phoneApp.paint(rows,owner,liveWorkoutsLoaded);if(owner){paintPlans();paintRecovery();paintEndurance();paintConnections();push.refresh();if(notificationPending){notificationPending=false;setTimeout(openNotificationWorkout,0);}}
 }
 async function refresh() {
@@ -132,7 +134,7 @@ $('addRecovery').onclick=()=>{$('recoveryForm').reset();$('recoveryDate').value=
 $('recoveryForm').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const checkin={date:$('recoveryDate').value,weight_unit:$('weightUnit').value,notes:$('recoveryNotes').value};for(const [id,key]of [['sleepHours','sleep_hours'],['energy','energy'],['soreness','soreness'],['bodyWeight','weight'],['restingHr','resting_hr'],['hrv','hrv']])checkin[key]=$(id).value?Number($(id).value):null;await api('checkin',{checkin});await refresh();$('recoveryDialog').close();}catch(e){status('recoveryStatus',e.message,true);}finally{button.disabled=false;}};
 async function saveConnection(body){try{await api('connections',body);await api('sync');await refresh();$('calendarUrl').value='';}catch(e){$('syncStatus').textContent=e.message;}}
 $('calendarForm').onsubmit=async e=>{e.preventDefault();if(!$('calendarUrl').value)return;const b=e.submitter;b.disabled=true;await saveConnection({calendar:$('calendarUrl').value});b.disabled=false;};$('disconnectCalendar').onclick=()=>saveConnection({calendar:''});
-$('syncNow').onclick=async()=>{const b=$('syncNow');b.disabled=true;$('syncStatus').textContent='Syncing…';try{await api('sync');await refresh();}catch(e){$('syncStatus').textContent=e.message;}finally{b.disabled=false;}};
+
 $('csvFile').onchange=async()=>{importRows=[];$('confirmImport').hidden=true;try{const file=$('csvFile').files[0];if(!file)return;if(file.size>2000000)throw new Error('Choose a CSV smaller than 2 MB.');importRows=trainingPeaksCsv(await file.text());if(!importRows.length)throw new Error('No workouts found.');$('importPreview').innerHTML='<p class="fine">'+importRows.length+' rows ready to review. Existing matching sessions will be skipped.</p><div class="import-table">'+importRows.slice(0,12).map(r=>esc(r.date+' · '+r.type+' · '+r.title+' · '+fmt(r.duration_hours*60,1)+' min')).join('<br>')+'</div>';$('confirmImport').hidden=false;}catch(e){$('importPreview').textContent=e.message;}};
 $('confirmImport').onclick=async()=>{const b=$('confirmImport');b.disabled=true;try{const result=await api('import',{workouts:importRows});await refresh();$('importPreview').textContent=result.imported+' new workouts imported.';b.hidden=true;importRows=[];}catch(e){$('importPreview').textContent=e.message;}finally{b.disabled=false;}};
 for(const button of document.querySelectorAll('[data-close]')){button.innerHTML=icon('close');button.onclick=()=>$(button.dataset.close).close();}
@@ -163,7 +165,7 @@ $('mobileLog').onclick=()=>requireOwner(()=>openWorkout(null,'Strength'));
 function paintToday(){
  const today=localDate();$('todayDate').textContent=pretty(today,{weekday:'long',month:'long',day:'numeric'});
  const actual=completed(rows).filter(r=>r.date===today),plans=owner?rows.filter(r=>r.date===today&&r.status==='planned'):[];
- $('todaySync').textContent=owner?connections.hosted?.last_success_at?'TrainingPeaks last checked '+new Date(connections.hosted.last_success_at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific. Checks at 9:30 a.m. and 9:30 p.m.':'No verified hosted check available. Add what you actually did.':'Sign in to see your coach’s plan and log workouts.';
+ $('todaySync').textContent=owner?connections.hosted?.last_success_at?'TrainingPeaks last checked '+new Date(connections.hosted.last_success_at).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})+' Pacific. See connection settings for the automatic check schedule.':'No verified hosted check available. Add what you actually did.':'Sign in to see your coach’s plan and log workouts.';
  $('todayCards').innerHTML=[...actual,...plans].map(r=>`<article class="plan-card"><div class="eyebrow">${r.status==='planned'?'Prescribed':'Completed'} · ${esc(r.type)}</div><h3>${esc(r.title)}</h3><p>${r.status==='planned'?(r.planned_duration_hours?fmt(r.planned_duration_hours*60)+' min prescribed':'No prescribed duration'):esc(workoutMeta(r))}</p>${owner?`<button class="button outline today-edit" data-id="${r.id}">${r.status==='planned'?'Log actuals':'Edit actuals'}</button>`:''}</article>`).join('')||'<p class="muted">No sessions recorded for today yet. A quiet day is part of the record too.</p>';
  document.querySelectorAll('.today-edit').forEach(b=>b.onclick=()=>openWorkout({...rows.find(r=>r.id===b.dataset.id),status:'completed'}));
  $('repeatLift').hidden=!owner||!completed(rows).some(r=>(r.exercises||[]).length);

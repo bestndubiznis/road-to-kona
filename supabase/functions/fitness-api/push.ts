@@ -30,7 +30,7 @@ export async function sendPush(subscription: any, keys: any, test = false, custo
   return response.status;
 }
 export async function sendSyncAlert(db:any,settings:any,alert:any){
- if(!alert)return {sent:0};const state=settings.hosted_tp||{},notified=state.alert_deliveries||{};
+ if(!alert)return {sent:0};const state=settings.hosted_tp||{},notified={...(state.alert_deliveries||{})};
  const subscriptions=ok(await db.from('fitness_push_subscriptions').select('*'));let sent=0;
  if(!subscriptions.length||!settings.vapid)return {sent:0,connected:false};
  for(const row of subscriptions){
@@ -39,7 +39,8 @@ export async function sendSyncAlert(db:any,settings:any,alert:any){
   if(code>=200&&code<300){notified[row.endpoint_hash]=alert.key;sent++;}
   if(code===404||code===410)ok(await db.from('fitness_push_subscriptions').delete().eq('endpoint_hash',row.endpoint_hash));
  }
- ok(await db.from('fitness_settings').upsert({key:'hosted_tp',value:{...state,alert_deliveries:notified}}));return {sent,connected:true};
+ // Do not overwrite a successful import that finished while push delivery was in flight.
+ ok(await db.from('fitness_settings').update({value:{...state,alert_deliveries:notified}}).eq('key','hosted_tp').eq('value',JSON.stringify(state)));return {sent,connected:true};
 }
 export async function sendDuePush(db: any, rows: any[], settings: any, now = new Date()) {
   if (!pushWindow(now)) return { due:false,sent:0 };
