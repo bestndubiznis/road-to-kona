@@ -1,3 +1,5 @@
+import {createJourneyAnimation} from './journey-animation.mjs';
+const paintJourney=createJourneyAnimation();
 import {icon} from './lib/icons.mjs';
 import {journalData,weekDays} from './lib/journal.mjs';
 import {localDate,number} from './lib/fitness.mjs';
@@ -24,12 +26,9 @@ export function setupJournal(){
  $('search').placeholder='Search sport, date, source, or exercise';
  try{const saved=localStorage.getItem('fitness-journal-range');if([...$('range').options].some(o=>o.value===saved))$('range').value=saved;}catch{}
 }
-export function paintJournal(rows,plans=[]){
+export function paintJournal(rows,plans=[],ready=true){
  const j=journalData(rows,$('range').value),label=$('range').selectedOptions[0].textContent;
- $('journeyTotal').innerHTML='<strong>'+j.hours.toFixed(1)+'</strong><span>hours logged<br>'+esc(label)+'</span>';
- const points=j.days.map((d,i)=>[12+i/Math.max(1,j.days.length-1)*476,145-d.cumulative/Math.max(1,j.hours)*125]);
- const path=points.map(([x,y],i)=>(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)).join(' ');
- $('journeyCurve').innerHTML='<svg viewBox="0 0 500 170" role="img" aria-label="Cumulative training hours from '+j.start+' through '+j.end+'"><path d="'+path+' L488 160 L12 160 Z" fill="#e4ee78" opacity=".12"/><path d="'+path+'" fill="none" stroke="#e4ee78" stroke-width="3"/>'+points.filter((_,i)=>i===points.length-1).map(([x,y])=>'<circle cx="'+x+'" cy="'+y+'" r="5" fill="#e4ee78"/>').join('')+'</svg>';
+ paintJourney(j,label,ready);
  $('journeyCaption').textContent=date(j.start)+' — '+date(j.end)+' · cumulative completed hours';
  $('calendarCaption').textContent=j.activeDays+' days with recorded training across '+j.days.length+' calendar days · '+label;
  const offset=(new Date(j.start+'T12:00:00Z').getUTCDay()+6)%7;
