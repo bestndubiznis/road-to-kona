@@ -1,6 +1,7 @@
-import {createPhoneApp} from './phone-app.mjs?v=phone1';
-import {createMobility} from './mobility-view.mjs?v=mobility1';
-import {setupJournal,paintJournal} from './journal-view.mjs?v=polish1';
+import {sportIcon,icon} from './lib/icons.mjs';
+import {createPhoneApp} from './phone-app.mjs?v=icons1';
+import {createMobility} from './mobility-view.mjs?v=icons1';
+import {setupJournal,paintJournal} from './journal-view.mjs?v=icons1';
 setupJournal();
 const mobility=createMobility();
 const phoneApp=createPhoneApp({onRefresh:()=>refresh()});
@@ -16,7 +17,6 @@ const $ = id => document.getElementById(id), C = window.FITNESS_CONFIG;
 const fmt = (n, d=0) => number(n).toLocaleString(undefined,{maximumFractionDigits:d});
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pretty = (date, options={month:'short',day:'numeric'}) => new Date(date+'T12:00:00').toLocaleDateString('en-US',options);
-const sportIcon = type => ({Swim:'≈',Bike:'◎',Run:'↗',Strength:'↔',Race:'⚑',Walk:'↗',Hike:'△',Mobility:'↝'}[type] || '○');
 const status = (id,text,error=false) => { $(id).textContent=text; $(id).className='form-status '+(error?'error':'success'); };
 const auth = !preview && window.supabase?.createClient(C.supabaseUrl,C.publishableKey);
 let session = null, owner = false, rows = window.WORKOUTS || [], checkins = [], connections = {}, active='All', visible=15, editing=null, importRows=[], refreshVersion=0, parsedNote=null, notificationPending=new URLSearchParams(location.search).get('log')==='strength';
@@ -135,7 +135,7 @@ $('calendarForm').onsubmit=async e=>{e.preventDefault();if(!$('calendarUrl').val
 $('syncNow').onclick=async()=>{const b=$('syncNow');b.disabled=true;$('syncStatus').textContent='Syncing…';try{await api('sync');await refresh();}catch(e){$('syncStatus').textContent=e.message;}finally{b.disabled=false;}};
 $('csvFile').onchange=async()=>{importRows=[];$('confirmImport').hidden=true;try{const file=$('csvFile').files[0];if(!file)return;if(file.size>2000000)throw new Error('Choose a CSV smaller than 2 MB.');importRows=trainingPeaksCsv(await file.text());if(!importRows.length)throw new Error('No workouts found.');$('importPreview').innerHTML='<p class="fine">'+importRows.length+' rows ready to review. Existing matching sessions will be skipped.</p><div class="import-table">'+importRows.slice(0,12).map(r=>esc(r.date+' · '+r.type+' · '+r.title+' · '+fmt(r.duration_hours*60,1)+' min')).join('<br>')+'</div>';$('confirmImport').hidden=false;}catch(e){$('importPreview').textContent=e.message;}};
 $('confirmImport').onclick=async()=>{const b=$('confirmImport');b.disabled=true;try{const result=await api('import',{workouts:importRows});await refresh();$('importPreview').textContent=result.imported+' new workouts imported.';b.hidden=true;importRows=[];}catch(e){$('importPreview').textContent=e.message;}finally{b.disabled=false;}};
-for(const button of document.querySelectorAll('[data-close]'))button.onclick=()=>$(button.dataset.close).close();
+for(const button of document.querySelectorAll('[data-close]')){button.innerHTML=icon('close');button.onclick=()=>$(button.dataset.close).close();}
 function openNotificationWorkout(){requireOwner(()=>{const plan=rows.find(r=>r.date===localDate() && r.status==='planned' && (r.type==='Strength'||r.strength>0));openWorkout(plan?{...plan,status:'completed'}:null,'Strength');});}
 const push=preview?{refresh(){}}:setupPush({api,requireOwner,openLog:()=>{notificationPending=true;if(owner){notificationPending=false;openNotificationWorkout();}else $('loginDialog').showModal();}});
 const muscleMap=createMuscleMap({getRows:()=>rangeRows(),isOwner:()=>owner,getPeriodLabel:()=>$('range').selectedOptions[0].textContent});

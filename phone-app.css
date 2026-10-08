@@ -4,3 +4,5 @@
 .phone-app .app-subnav{display:flex}.phone-app #weekAhead>.section-heading>div{display:none}.phone-app #weekAhead>.section-heading{margin-bottom:16px}.phone-app #weekAhead>.section-heading>label{display:flex;align-items:center;justify-content:space-between;width:100%;font-size:13px}.phone-app #weekAhead>.section-heading select{min-width:170px}.phone-app .app-recent-card b{font-size:14px}
 
 .phone-app .app-page-heading{position:relative;padding-right:54px}.app-refresh{position:absolute;right:0;bottom:18px;width:44px;height:44px;border:1px solid var(--line);background:#fffef9;border-radius:50%;font-size:25px;color:var(--ink)}
+
+.app-sport-icon .ui-icon{width:24px;height:24px}.app-week-days b .ui-icon{width:17px;height:17px}.app-refresh{display:grid;place-items:center}.app-refresh .ui-icon{width:22px;height:22px}.app-home-links span .ui-icon,.app-recent-heading a .ui-icon{width:13px;height:13px;margin-left:3px}.app-settings-links .ui-icon{width:18px;height:18px}
