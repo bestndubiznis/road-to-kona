@@ -24,7 +24,7 @@ async function records() {
   for (let from = 0; ; from += 1000) {
     const page = check(await db.from('fitness_workouts').select('*').order('id').range(from, from + 999));
     // Keep fully undone daily mobility records for safe retries, but out of all views and skipped-plan counts.
-    rows.push(...page.filter((r:any)=>!(r.external_id?.startsWith('mobility-day:') && !(r.data.mobility_stretches||[]).length)).map((r: any) => ({ ...r.data, id: r.id, external_id: r.external_id })));
+    rows.push(...page.filter((r:any)=>!(r.external_id?.startsWith('mobility-day:') && !(r.data.mobility_stretches||[]).length && !r.data.recovery_boots_minutes)).map((r: any) => ({ ...r.data, id: r.id, external_id: r.external_id })));
     if (page.length < 1000) return rows;
   }
 }

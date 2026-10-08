@@ -32,3 +32,12 @@ test('simultaneous first completions merge into one daily session',async()=>{
  await Promise.all([saveMobility(db,input,now),saveMobility(db,{...input,stretch_id:'back'},now)]);
  assert.equal(row.external_id,'mobility-day:'+date);assert.equal(row.data.mobility_stretches.length,2);assert.equal(row.data.duration_hours,90/3600);
 });
+test('Normatec minutes combine with stretches without losing either and undo independently',()=>{
+ let row=mobilityUpdate(null,{date,stretch_id:'normatec',minutes:20,completed:true},now);
+ assert.equal(row.duration_hours,0);assert.equal(row.strength,0);assert.equal(row.status,'completed');
+ row=mobilityUpdate(row,input,now);assert.equal(row.duration_hours,1/60);
+ row=mobilityUpdate(row,{date,stretch_id:'normatec',minutes:20,completed:true},now);assert.equal(row.duration_hours,1/60);
+ assert.equal(publicWorkout(row).recovery_boots_minutes,20);
+ row=mobilityUpdate(row,{date,stretch_id:'normatec',completed:false},now);assert.equal(row.duration_hours,1/60);assert.equal(row.mobility_stretches.length,1);
+ assert.throws(()=>mobilityUpdate(null,{date,stretch_id:'normatec',minutes:0,completed:true},now));
+});
