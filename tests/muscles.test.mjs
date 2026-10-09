@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {muscleSummary,exerciseMuscles,muscleScore} from '../lib/muscles.mjs';
 import {parseWorkoutNote} from '../lib/note-parser.mjs';
+import {EXERCISE_CATALOGUE} from '../lib/exercise-catalogue.mjs';
 test('parsed incline and Arnold presses appear in associated muscle logs',()=>{
  const {exercises}=parseWorkoutNote('4x 12 incline dumbbell press 45 lbs dumbbells, 3 x 10 Arnold press 30 pounds dumbbells');
  const {groups,unmapped}=muscleSummary([{date:'2026-10-08',type:'Strength',exercises}],{privateDetails:true,end:'2026-10-08'});
@@ -33,4 +34,39 @@ test('both counts mixed sessions once and mode-specific latest dates follow peri
  const g=muscleSummary(rows,{privateDetails:true,start:'2026-10-01',end:'2026-10-06'}).groups.quads;
  assert.equal(muscleScore(g,'both'),2);assert.equal(muscleScore(g,'strength'),3);assert.equal(muscleScore(g,'endurance'),1);assert.equal(g.enduranceLast,'2026-10-04');assert.equal(g.strengthLast,'2026-10-06');
  const recent=muscleSummary(rows,{privateDetails:true,start:'2026-10-05',end:'2026-10-06'}).groups.quads;assert.equal(muscleScore(recent,'both'),1);assert.equal(recent.enduranceLast,null);
+});
+
+test('common equipment, punctuation, and movement aliases map consistently',()=>{
+ const cases=[
+  ['Incline DB chest-press (per hand)',['chest','triceps','shoulders']],
+  ['Seated dumbbell Arnold press',['shoulders','triceps']],
+  ['OHP',['shoulders','triceps']],
+  ['Smith machine bench press',['chest','triceps','shoulders']],
+  ['Rear-delt dumbbell flyes',['back','shoulders']],
+  ['Cable chest flies',['chest']],
+  ['Lat pull-down',['back','biceps']],
+  ['Assisted chin-ups',['back','biceps']],
+  ['DB reclined bicep curls',['biceps']],
+  ['Rope overhead triceps extensions',['triceps']],
+  ['Cable tricep kickbacks',['triceps']],
+  ['Glute kickbacks',['glutes']],
+  ['Seated leg curls',['hamstrings']],
+  ['Nordic curls',['hamstrings']],
+  ['Weighted bird dogs',['core']],
+  ['Pallof press',['core']],
+  ['Hanging knee raises',['core']],
+  ['Single-leg calf raises',['calves']],
+ ];
+ for(const [name,expected] of cases)assert.deepEqual(exerciseMuscles(name),expected,name);
+});
+test('ambiguous and unrelated names stay visible as unmapped without guessed muscles',()=>{
+ for(const name of ['Press','Curl','Kickback','Bench lateral stretch','Rowing machine','Express recovery','Mystery movement'])assert.deepEqual(exerciseMuscles(name),[],name);
+ const row={date:'2026-10-08',type:'Strength',exercises:[{name:'Mystery movement',sets:[{reps:8}]},{name:'Warmup mystery',sets:[{reps:8,kind:'warmup'}]}]};
+ const result=muscleSummary([row],{privateDetails:true,end:'2026-10-08'});
+ assert.deepEqual(result.unmappedNames,['Mystery movement']);assert.equal(result.unmapped,1);
+ assert.deepEqual(muscleSummary([row],{end:'2026-10-08'}).unmappedNames,[]);
+});
+
+test('every suggested catalogue exercise has a valid muscle mapping',()=>{
+ for(const entry of EXERCISE_CATALOGUE)assert.deepEqual(exerciseMuscles(entry.name),entry.muscles,entry.name);
 });

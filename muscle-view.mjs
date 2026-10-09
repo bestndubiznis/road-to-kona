@@ -1,4 +1,4 @@
-import {MUSCLES,muscleSummary,muscleScore} from './lib/muscles.mjs?v=pressmap1';
+import {MUSCLES,muscleSummary,muscleScore} from './lib/muscles.mjs?v=catalogue1';
 import {dateStart} from './lib/progress.mjs';
 import {localDate,completed,totals} from './lib/fitness.mjs';
 const paths={
@@ -32,7 +32,7 @@ export function createMuscleMap({getRows,isOwner,getPeriodLabel}){
   const enduranceStats=`<span><strong>${t.swim.toLocaleString()}</strong> yd swim</span><span><strong>${t.bike.toFixed(1)}</strong> mi bike</span><span><strong>${t.run.toFixed(1)}</strong> mi run / walk</span>`;
   const liftingStats=`<span><strong>${liftingSessions}</strong> lifting sessions</span><span><strong>${workingSets}</strong> working sets</span>`;
   $('muscleHistory').innerHTML=lifting?liftingStats:both?liftingStats+enduranceStats:enduranceStats;
-  $('muscleCaveat').textContent=`Darker color means more ${unit} relative to other groups in the selected period. This map shows recorded training, not measured growth, recovery readiness, or a population percentile.`+(lifting||both?` ${result.undetailed} strength sessions have no detailed sets; ${result.unmapped} exercise entries could not be mapped. Nothing is guessed.`:'');
+  $('muscleCaveat').textContent=`Darker color means more ${unit} relative to other groups in the selected period. This map shows recorded training, not measured growth, recovery readiness, or a population percentile.`+(lifting||both?` ${result.undetailed} strength sessions have no detailed sets; ${result.unmapped} exercise entries could not be mapped. ${result.unmappedNames.length?'Unrecognized names: '+result.unmappedNames.join(', ')+'. Your sets stay saved; edit an unrecognized name to a suggested exercise to include it in the map.':''}`:'');
   document.querySelectorAll('[data-muscle]').forEach(el=>{const choose=()=>{selected=el.dataset.muscle;paint();};el.onclick=choose;if(el.tagName.toLowerCase()==='g')el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();document.querySelector(`#muscleButtons [data-muscle="${selected}"]`).focus();}};});
  }
  $('muscleMode').onchange=paint;$('muscleRange').onchange=paint;return {paint};

@@ -52,4 +52,8 @@ Browser subscriptions and VAPID keys are private in Supabase. The notification w
 
 After a reminder, write what you did in **Tell me what you did**, choose **Break note into sets**, review the proposed rows, and choose **Use these exercise rows** before saving. The local helper recognizes common phrases such as “squats, three sets of five at 135 lb” and “bench 95 lb for 3 sets of 8.” It supports varying loads in individual sets and explicit bodyweight. Original notes always remain private.
 
-This is conservative pattern extraction, not an unrestricted language model. Missing loads/units are flagged and must be entered or explicitly marked bodyweight. Dumbbell load basis is preserved or flagged; subjective notes and cardio descriptions remain in the original note. Use the measured duration/distance fields for cardio. Nothing is silently sent to an external AI service.
+This is conservative pattern extraction, not an unrestricted language model. Missing loads/units are flagged and must be entered or explicitly marked bodyweight. Dumbbell loads default to per hand unless explicitly stated as total or combined; subjective notes and cardio descriptions remain in the original note. Use the measured duration/distance fields for cardio. Nothing is silently sent to an external AI service.
+
+### Exercise recognition
+
+`lib/exercise-catalogue.mjs` defines supported movement families, name aliases, and muscle associations shared by the map, logging form, and mobility suggestions. The logging form suggests catalogue names and previews the muscle mapping before saving. Common equipment abbreviations, hyphens, and load-basis annotations are normalized without rewriting saved exercise names. Unrecognized exercises remain saved and are listed by name in the muscle map; edit their names to a supported movement when appropriate. Add aliases with regression tests rather than guessing from ambiguous names such as “press” or “curl.”
