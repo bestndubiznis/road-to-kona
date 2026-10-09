@@ -11,7 +11,7 @@ const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.se
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
 import {createMuscleMap} from './muscle-view.mjs?v=map3';
 import {dateStart, progressWeeks, filterWorkouts, bestEfforts, clockTime, SANTA_CRUZ} from './lib/progress.mjs';
-import { parseWorkoutNote } from './lib/note-parser.mjs?v=mobile2';
+import { parseWorkoutNote } from './lib/note-parser.mjs?v=perhand1';
 import { setupPush } from './push.mjs';
 import { number, localDate, completed, totals, weekly, strengthHistory, trainingPeaksCsv, validateWorkout } from './lib/fitness.mjs?v=mobile2';
 const $ = id => document.getElementById(id), C = window.FITNESS_CONFIG;
