@@ -1,18 +1,37 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {parseWorkoutNote} from '../lib/note-parser.mjs';
+test('leading set-by-rep shorthand extracts the complete dumbbell and cable workout',()=>{
+ const note='4x 12 incline dumbbell press 45 lbs dumbbells, 3 x 10 Arnold press 30 pounds dumbbells, 3x10 reclined bicep curls 20lbs dumbbells, 3x8 20 lbs dumbbell hammer curls, 3x10 cable crunches 60lbs';
+ const r=parseWorkoutNote(note);
+ assert.deepEqual(r.exercises.map(e=>[e.name,e.unit,e.sets.length,e.sets[0].reps,e.sets[0].weight]),[
+  ['Incline dumbbell press (per hand)','lb',4,12,45],
+  ['Arnold press (per hand)','lb',3,10,30],
+  ['Reclined bicep curls (per hand)','lb',3,10,20],
+  ['Dumbbell hammer curls (per hand)','lb',3,8,20],
+  ['Cable crunches','lb',3,10,60]
+ ]);
+ assert.equal(r.original,note);assert.deepEqual(r.unparsed,[]);
+ assert.deepEqual(r.issues,[]);
+});
 test('conversational sentences and number words become separate exercise sets',()=>{const note='Squats, three sets of five at 135 lb. Bench, three sets of eight at 95 lb. Bodyweight pull-ups, three sets of six.';const r=parseWorkoutNote(note);assert.equal(r.exercises.length,3);assert.equal(r.exercises[0].sets.length,3);assert.equal(r.exercises[0].sets[0].weight,135);assert.equal(r.exercises[1].sets[0].reps,8);assert.equal(r.exercises[2].unit,'bodyweight');assert.equal(r.original,note);assert.equal(r.issues.length,0);});
 test('load-first phrases and decimal kilogram weights are preserved',()=>{const r=parseWorkoutNote('Bench press 42.5 kg for 3 sets of 8. Squats were 5 reps at 60 kg for 2 sets.');assert.equal(r.exercises[0].sets[0].weight,42.5);assert.equal(r.exercises[0].unit,'kg');assert.equal(r.exercises[1].sets.length,2);});
 test('individual sets with different loads stay distinct',()=>{const r=parseWorkoutNote('Squat: 135 lb x 5, 145 lb x 5, 155 lb x 3');assert.equal(r.exercises.length,1);assert.deepEqual(r.exercises[0].sets.map(s=>[s.weight,s.reps]),[[135,5],[145,5],[155,3]]);});
 test('missing units and loads are flagged, never guessed',()=>{const r=parseWorkoutNote('Squats 3 x 5 at 135. Pull-ups 3 x 6.');assert.equal(r.exercises[0].unit,'');assert.equal(r.exercises[1].sets[0].weight,'');assert.ok(r.issues.length>=3);});
-test('dumbbell per-hand basis is preserved; unspecified basis is flagged',()=>{const r=parseWorkoutNote('Dumbbell bench press 3 x 8 at 45 lb each. Dumbbell rows 3 x 10 at 40 lb.');assert.match(r.exercises[0].name,/per hand/);assert.match(r.exercises[1].name,/unspecified/);assert.ok(r.issues.some(i=>i.includes('per hand or total')));});
+test('dumbbell weights default to per hand and preserve explicit per-hand wording',()=>{const r=parseWorkoutNote('Dumbbell bench press 3 x 8 at 45 lb each. Dumbbell rows 3 x 10 at 40 lb.');assert.match(r.exercises[0].name,/per hand/);assert.match(r.exercises[1].name,/per hand/);assert.deepEqual(r.issues,[]);});
 test('cardio and subjective notes do not become invented lifting sets',()=>{const r=parseWorkoutNote('I ran 3 miles in 30 minutes. Legs felt sore. I slept six hours.');assert.equal(r.exercises.length,0);assert.ok(r.unparsed.length);});
 test('explicit overall weight unit can apply to all exercises',()=>{const r=parseWorkoutNote('All weights in pounds. Squats 3 x 5 at 135. Bench 3 x 8 at 95.');assert.equal(r.exercises[0].unit,'lb');assert.equal(r.exercises[1].unit,'lb');});
 
 test('sets before exercise names, per-side work, and last-set variation',()=>{
  const r=parseWorkoutNote('Body weight pistol squats to the bench 10 each leg 3 sets, 3 sets of bent over rows 10 at 40lb dumbbells, 3 sets of 10 bird dogs each sides. 3 sets of half kneeling shoulder press 8 reps each side 27.5 lbs and then going up to 10 reps on last set, weighted single leg bench lateral step ups with 27.5 lbs dumbbell 3 sets of 10');
- assert.equal(r.exercises.length,5);assert.equal(r.exercises[0].unit,'bodyweight');assert.equal(r.exercises[1].sets[0].weight,40);assert.match(r.exercises[2].name,/per side/);assert.deepEqual(r.exercises[3].sets.map(s=>s.reps),[8,8,10]);assert.equal(r.exercises[4].sets[0].weight,27.5);assert.ok(r.issues.some(i=>i.includes('per hand or total')));
+ assert.equal(r.exercises.length,5);assert.equal(r.exercises[0].unit,'bodyweight');assert.equal(r.exercises[1].sets[0].weight,40);assert.match(r.exercises[2].name,/per side/);assert.deepEqual(r.exercises[3].sets.map(s=>s.reps),[8,8,10]);assert.equal(r.exercises[4].sets[0].weight,27.5);assert.match(r.exercises[1].name,/per hand/);assert.match(r.exercises[4].name,/per hand/);
 });
 test('timed holds and omitted reps are preserved without invented rep sets',()=>{
  const note='bodyweight single leg iso glute bridges 30 seconds each side 3 sets, weighted ab crunches pull down with rope at 50 lbs 3 sets';const r=parseWorkoutNote(note);assert.equal(r.exercises.length,1);assert.equal(r.exercises[0].sets[0].seconds,30);assert.equal(r.exercises[0].sets.length,3);assert.equal(r.unparsed.length,1);assert.ok(r.issues.some(i=>i.includes('Reps missing')));assert.equal(r.original,note);
 });
 
 test('minute holds convert to seconds without invented reps',()=>{const r=parseWorkoutNote('Bodyweight plank 3 sets of 1 minute');assert.equal(r.exercises[0].sets[0].seconds,60);assert.equal(r.exercises[0].sets[0].reps,undefined);});
+
+test('explicit total dumbbell loads override the per-hand default in both parser paths',()=>{
+ for(const note of ['Dumbbell rows 3 x 10 at 40 lb total','3x10 dumbbell rows 40 lb total','3 sets of dumbbell rows 10 at 40 lb combined']){
+  const r=parseWorkoutNote(note);assert.equal(r.exercises.length,1);assert.equal(r.exercises[0].name,'Dumbbell rows (total load)');assert.equal(r.exercises[0].sets[0].weight,40);assert.deepEqual(r.issues,[]);assert.deepEqual(r.unparsed,[]);
+ }
+});
