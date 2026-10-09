@@ -1,4 +1,4 @@
-import {MUSCLES,muscleSummary,muscleScore} from './lib/muscles.mjs?v=map3';
+import {MUSCLES,muscleSummary,muscleScore} from './lib/muscles.mjs?v=pressmap1';
 import {dateStart} from './lib/progress.mjs';
 import {localDate,completed,totals} from './lib/fitness.mjs';
 const paths={

@@ -1,6 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {muscleSummary,exerciseMuscles,muscleScore} from '../lib/muscles.mjs';
+import {parseWorkoutNote} from '../lib/note-parser.mjs';
+test('parsed incline and Arnold presses appear in associated muscle logs',()=>{
+ const {exercises}=parseWorkoutNote('4x 12 incline dumbbell press 45 lbs dumbbells, 3 x 10 Arnold press 30 pounds dumbbells');
+ const {groups,unmapped}=muscleSummary([{date:'2026-10-08',type:'Strength',exercises}],{privateDetails:true,end:'2026-10-08'});
+ assert.equal(unmapped,0);assert.equal(groups.chest.sets,4);assert.equal(groups.shoulders.sets,7);assert.equal(groups.triceps.sets,7);
+ assert.deepEqual(groups.chest.exercises.map(e=>e.name),['Incline dumbbell press (per hand)']);
+ assert.deepEqual(groups.shoulders.exercises.map(e=>e.name),['Incline dumbbell press (per hand)','Arnold press (per hand)']);
+ assert.equal(groups.shoulders.sessions,1);
+ for(const label of ['Incline chest press','Incline press','Incline DB press'])assert.deepEqual(exerciseMuscles(label),['chest','triceps','shoulders']);
+});
 test('only completed in-range actuals contribute; cardio does not invent sets',()=>{
  const rows=[{date:'2026-10-05',type:'Bike',duration_hours:1},{date:'2026-10-06',type:'Swim',status:'planned'},{date:'2026-01-01',type:'Run'}];
  const {groups}=muscleSummary(rows,{start:'2026-10-01',end:'2026-10-06'});

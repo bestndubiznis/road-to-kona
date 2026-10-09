@@ -9,7 +9,7 @@ const phoneApp=createPhoneApp({onRefresh:()=>refresh()});
 let liveWorkoutsLoaded=false,initialLoadComplete=false;
 const preview=location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview');
 import {shift,weekReview,enduranceCompare,repeatNote} from './lib/review.mjs?v=today4';
-import {createMuscleMap} from './muscle-view.mjs?v=map3';
+import {createMuscleMap} from './muscle-view.mjs?v=pressmap1';
 import {dateStart, progressWeeks, filterWorkouts, bestEfforts, clockTime, SANTA_CRUZ} from './lib/progress.mjs';
 import { parseWorkoutNote } from './lib/note-parser.mjs?v=perhand1';
 import { setupPush } from './push.mjs';
